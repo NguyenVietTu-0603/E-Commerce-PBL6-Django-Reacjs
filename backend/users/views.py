@@ -6,6 +6,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from .serializers import UserSerializer
 
 from .models import User, Profile
 from .serializers import (
@@ -442,3 +445,13 @@ class UserStatisticsView(APIView):
                 'admins': admins,
             }
         })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def current_user(request):
+    """
+    GET /api/users/me/ -> thông tin user đang auth
+    """
+    serializer = UserSerializer(request.user, context={'request': request})
+    return Response(serializer.data)

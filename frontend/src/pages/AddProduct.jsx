@@ -1,5 +1,5 @@
+import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import productService from '../utils/productService';
 import { useAuth } from '../utils/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,20 +20,28 @@ const AddProduct = () => {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [loading, setLoading] = useState(false);
   const [loadingCats, setLoadingCats] = useState(true);
+  const [catError, setCatError] = useState(null);
 
   useEffect(() => {
-    const loadCategories = async () => {
+    let cancelled = false;
+    async function loadCategories() {
+      setLoadingCats(true);
+      setCatError(null);
       try {
-        const data = await productService.getCategories();
-        setCategories(data);
-      } catch (e) {
-        console.error(e);
-        setMessage({ type: 'error', text: 'Failed to load categories' });
+        const res = await axios.get('/api/categories/', { timeout: 10000 });
+        // handle paginated or plain list responses
+        const data = res.data;
+        const list = Array.isArray(data) ? data : (data.results ?? []);
+        if (!cancelled) setCategories(list);
+      } catch (err) {
+        console.error('loadCategories error', err);
+        if (!cancelled) setCatError(err.response?.data ?? err.message ?? 'Lỗi');
       } finally {
-        setLoadingCats(false);
+        if (!cancelled) setLoadingCats(false);
       }
-    };
+    }
     loadCategories();
+    return () => { cancelled = true; };
   }, []);
 
   const handleChange = (e) => {
@@ -55,33 +63,40 @@ const AddProduct = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setMessage({ type: '', text: '' });
     const err = validate();
     if (err) {
       setMessage({ type: 'error', text: err });
+      setLoading(false);
       return;
     }
-    setLoading(true);
+
+    // lấy token trước, rồi tạo FormData ngay lập tức
+    const token = localStorage.getItem('access_token');
+    const formData = new FormData();
+
+    formData.append('name', form.name.trim());
+    formData.append('description', form.description.trim());
+    formData.append('price', Number(form.price));
+    formData.append('stock', Number(form.stock));
+    if (form.category) formData.append('category', form.category);
+    if (form.imageFile) formData.append('image', form.imageFile);
+
     try {
-      const payload = {
-        name: form.name.trim(),
-        description: form.description.trim(),
-        price: Number(form.price),
-        stock: Number(form.stock),
-        imageFile: form.imageFile,
-        category: form.category || null,
-      };
-      const res = await productService.createProduct(payload);
-      setMessage({ type: 'success', text: res.message || 'Created!' });
+      const res = await axios.post('/api/products/', formData, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          // DON'T set Content-Type manually for FormData
+        },
+      });
+
+      setMessage({ type: 'success', text: 'Product created successfully!' });
 
       const dest = user ? getDefaultRoute(user.user_type) : '/dashboard';
       setTimeout(() => navigate(dest), 800);
     } catch (error) {
-      const text =
-        error.response?.data?.error ||
-        error.response?.data?.detail ||
-        error.response?.data?.message ||
-        'Failed to create product';
-      setMessage({ type: 'error', text });
+      setMessage({ type: 'error', text: error.message });
     } finally {
       setLoading(false);
     }
@@ -130,6 +145,7 @@ const AddProduct = () => {
               ))}
             </select>
             {loadingCats && <div className="text-center" style={{ marginTop: 8 }}>Loading categories...</div>}
+            {catError && <div style={{ color: 'red' }}>Error loading categories: {String(catError)}</div>}
           </div>
 
           <div className="form-group">
