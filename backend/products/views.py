@@ -1,8 +1,9 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
-from .serializers import ProductCreateSerializer, CategorySerializer
+from .serializers import ProductCreateSerializer, CategorySerializer, ProductSerializer
 from .models import Product, Category
+from rest_framework import viewsets, permissions, parsers
 
 class ProductCreateView(generics.CreateAPIView):
     queryset = Product.objects.all()
@@ -39,3 +40,28 @@ class CategoryListCreateView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
+
+
+class ProductViewSet(viewsets.ModelViewSet):
+    """
+    Cho phép GET/POST/PUT/PATCH/DELETE qua API.
+    - Dùng ProductCreateSerializer cho create/update (để nhận image upload).
+    - Dùng ProductSerializer cho read.
+    """
+    queryset = Product.objects.all().order_by('-created_at')
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return ProductCreateSerializer
+        return ProductSerializer
+
+class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Category.objects.all().order_by('name')
+    serializer_class = CategorySerializer
+    permission_classes = [permissions.AllowAny]

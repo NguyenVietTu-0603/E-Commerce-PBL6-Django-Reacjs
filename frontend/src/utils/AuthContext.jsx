@@ -20,20 +20,28 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const loadUser = async () => {
       const token = localStorage.getItem('access_token');
-      const savedUser = localStorage.getItem('user');
-      
-      if (token && savedUser) {
+      if (token) {
         try {
-          const userData = JSON.parse(savedUser);
-          setUser(userData);
-        } catch (error) {
-          console.error('❌ Error parsing saved user:', error);
-          localStorage.removeItem('user');
+          const apiUser = await authService.getCurrentUser();
+          setUser(apiUser);
+          try { localStorage.setItem('user', JSON.stringify(apiUser)); } catch {}
+        } catch (err) {
+          console.warn('Auth: cannot fetch current user, falling back to saved user', err);
+          const saved = localStorage.getItem('user');
+          if (saved) {
+            try { setUser(JSON.parse(saved)); } catch { localStorage.removeItem('user'); }
+          } else {
+            setUser(null);
+          }
+        }
+      } else {
+        const saved = localStorage.getItem('user');
+        if (saved) {
+          try { setUser(JSON.parse(saved)); } catch { localStorage.removeItem('user'); }
         }
       }
       setLoading(false);
     };
-    
     loadUser();
   }, []);
 

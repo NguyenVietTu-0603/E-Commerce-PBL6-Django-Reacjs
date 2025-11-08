@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './utils/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
-import Navbar from './components/Navbar';
+import Header from './components/Header';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -14,15 +14,24 @@ import ChangePassword from './pages/ChangePassword';
 import UserList from './pages/UserList';
 import AddProduct from './pages/AddProduct';
 import AddCategory from './pages/AddCategory';
+import Home from './pages/Home';
+import CategoryPage from './pages/CategoryPage.jsx';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
         <div className="App">
-          <Navbar />
+          <Header />
           <Routes>
-            {/* Public */}
+            {/* Home làm trang mặc định */}
+            <Route index element={<Home />} />
+            <Route path="/" element={<Home />} />
+
+            {/* Category page */}
+            <Route path="/category/:slug" element={<CategoryPage />} />
+
+            {/* giữ các route khác */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 

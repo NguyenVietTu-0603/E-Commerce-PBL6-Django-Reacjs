@@ -1,68 +1,108 @@
-import api from './api';
+const API = process.env.REACT_APP_API_URL || '';
 
-const authService = {
-  login: async (username, password) => {
-    const response = await api.post('/users/login/', { username, password });
-    const { user, tokens } = response.data;
-    
-    localStorage.setItem('access_token', tokens.access);
-    localStorage.setItem('refresh_token', tokens.refresh);
-    localStorage.setItem('user', JSON.stringify(user));
-    
-    return response.data;
-  },
+function getAuthHeader() {
+  const token = localStorage.getItem('access_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
-  register: async (userData) => {
-    const response = await api.post('/users/register/', userData);
-    const { user, tokens } = response.data;
-    
-    localStorage.setItem('access_token', tokens.access);
-    localStorage.setItem('refresh_token', tokens.refresh);
-    localStorage.setItem('user', JSON.stringify(user));
-    
-    return response.data;
-  },
+async function parseJson(res) {
+  const text = await res.text();
+  try { return JSON.parse(text); } catch { return text; }
+}
 
-  logout: async () => {
-    const refreshToken = localStorage.getItem('refresh_token');
+export async function login(username, password) {
+  const res = await fetch(`${API}/api/users/token/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  const data = await parseJson(res);
+  if (!res.ok) throw data;
+
+  // handle both shapes: { access, refresh }  OR { tokens: { access, refresh }, user }
+  const access = data.access ?? data.tokens?.access;
+  const refresh = data.refresh ?? data.tokens?.refresh;
+  if (access) localStorage.setItem('access_token', access);
+  if (refresh) localStorage.setItem('refresh_token', refresh);
+
+  // optionally store user if returned
+  const user = data.user ?? data.user_info ?? null;
+  if (user) localStorage.setItem('user', JSON.stringify(user));
+
+  // try to fetch current user if not returned
+  if (!user) {
     try {
-      await api.post('/users/logout/', { refresh: refreshToken });
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user');
-    }
-  },
+      const apiUser = await getCurrentUser();
+      if (apiUser) localStorage.setItem('user', JSON.stringify(apiUser));
+      return { access, refresh, user: apiUser };
+    } catch (_) { /* ignore */ }
+  }
 
-  getCurrentUser: async () => {
-    const response = await api.get('/users/me/');
-    const user = response.data;
-    localStorage.setItem('user', JSON.stringify(user));
-    return user;
-  },
+  return { access, refresh, user };
+}
 
-  updateProfile: async (userData) => {
-    const response = await api.patch('/users/me/', userData);
-    return response.data;
-  },
+export async function refreshToken() {
+  const refresh = localStorage.getItem('refresh_token');
+  if (!refresh) throw new Error('No refresh token');
+  const res = await fetch(`${API}/api/users/token/refresh/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh }),
+  });
+  const data = await parseJson(res);
+  if (!res.ok) throw data;
+  const newAccess = data.access ?? data.tokens?.access;
+  if (newAccess) localStorage.setItem('access_token', newAccess);
+  return data;
+}
 
-  changePassword: async (passwords) => {
-    const response = await api.post('/users/change-password/', passwords);
-    return response.data;
-  },
+export async function register(payload) {
+  const res = await fetch(`${API}/api/auth/register/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await parseJson(res);
+  if (!res.ok) throw data;
+  // try to save tokens if backend returns them
+  const access = data.access ?? data.tokens?.access;
+  const refresh = data.refresh ?? data.tokens?.refresh;
+  if (access) localStorage.setItem('access_token', access);
+  if (refresh) localStorage.setItem('refresh_token', refresh);
+  const user = data.user ?? null;
+  if (user) localStorage.setItem('user', JSON.stringify(user));
+  return data;
+}
 
-  getAllUsers: async (filters = {}) => {
-    const params = new URLSearchParams(filters).toString();
-    const response = await api.get(`/users/?${params}`);
-    return response.data;
-  },
+export async function logout() {
+  try {
+    await fetch(`${API}/api/auth/logout/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+    });
+  } catch (e) { /* ignore */ }
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('user');
+}
 
-  updateUserStatus: async (userId, status) => {
-    const response = await api.post(`/users/${userId}/status/`, { status });
-    return response.data;
-  },
+export async function getCurrentUser() {
+  const res = await fetch(`${API}/api/users/me/`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+  });
+  if (res.status === 401 || res.status === 403) {
+    throw new Error('Unauthorized');
+  }
+  const data = await parseJson(res);
+  if (!res.ok) throw data;
+  return data.user ?? data;
+}
+
+export default {
+  login,
+  register,
+  logout,
+  getCurrentUser,
+  refreshToken,
 };
-
-export default authService;
