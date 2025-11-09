@@ -8,6 +8,7 @@ urlpatterns = [
     path("api/", include("products.urls")),
     path("api/users/", include("users.urls")),   # <-- đảm bảo có dòng này
     path("api/auth/", include("users.urls")),    # (tùy, optional)
+    path('api/orders/', include('orders.urls')),  # phải có dòng này
 ]
 
 if settings.DEBUG:

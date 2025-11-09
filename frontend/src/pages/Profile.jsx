@@ -9,7 +9,11 @@ import {
   getDistrictName,
   getWardName
 } from '../utils/locationsData';
+import { formatPrice } from '../utils/formatPrice';
+
 import '../assets/UserProfile.css';
+
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:8000';
 
 const Profile = () => {
   const { user, updateUser } = useAuth();
@@ -35,6 +39,9 @@ const Profile = () => {
   const [cities, setCities] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -84,6 +91,33 @@ const Profile = () => {
       setWards([]);
     }
   }, [formData.district]);
+
+  useEffect(() => {
+    if (activeTab === 'orders') {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        setOrders([]);
+        setOrdersError('Bạn chưa đăng nhập.');
+        return;
+      }
+      setOrdersLoading(true);
+      setOrdersError('');
+      fetch(`${API_BASE}/api/orders/mine/`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(async res => {
+          const ct = res.headers.get('content-type') || '';
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          if (!ct.includes('application/json')) throw new Error('Phản hồi không phải JSON');
+          return res.json();
+        })
+        .then(data => {
+          setOrders(Array.isArray(data.results) ? data.results : []);
+        })
+        .catch(err => setOrdersError(err.message))
+        .finally(() => setOrdersLoading(false));
+    }
+  }, [activeTab]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -168,6 +202,14 @@ const Profile = () => {
     }
     setIsEditing(false);
     setMessage({ type: '', text: '' });
+  };
+
+  const statusMap = {
+    pending: 'Chờ xử lý',
+    paid: 'Đã thanh toán',
+    shipping: 'Đang giao',
+    completed: 'Hoàn tất',
+    canceled: 'Đã hủy'
   };
 
   const renderProfileTab = () => (
@@ -332,16 +374,56 @@ const Profile = () => {
     </div>
   );
 
-  const renderOrdersTab = () => (
-    <div className="empty-orders">
-      <div className="empty-icon">📦</div>
-      <h3>Chưa có đơn hàng nào</h3>
-      <p>Bạn chưa có đơn hàng nào. Hãy bắt đầu mua sắm ngay!</p>
-      <a href="/" className="browse-products-btn">
-        Khám phá sản phẩm
-      </a>
-    </div>
-  );
+  const renderOrdersTab = () => {
+    if (ordersLoading) return <div className="loading-box">Đang tải đơn hàng...</div>;
+    if (ordersError) return <div className="alert alert-error">{ordersError}</div>;
+    if (!orders.length) {
+      return (
+        <div className="empty-orders">
+          <div className="empty-icon">📦</div>
+            <h3>Chưa có đơn hàng nào</h3>
+            <p>Bạn chưa có đơn hàng. Hãy mua sắm ngay!</p>
+            <a href="/" className="browse-products-btn">Khám phá sản phẩm</a>
+        </div>
+      );
+    }
+    return (
+      <div className="orders-list">
+        {orders.map(o => (
+          <div key={o.order_id} className="order-card">
+            <div className="order-head">
+              <div>
+                <strong>Mã đơn:</strong> {o.order_id}
+              </div>
+              <span className={`order-status status-${o.status}`}>{statusMap[o.status] || o.status}</span>
+            </div>
+            <div className="order-meta">
+              <span>Ngày: {new Date(o.created_at).toLocaleString('vi-VN')}</span>
+              <span>Tổng: {formatPrice(o.total_amount)}</span>
+              <span>Thanh toán: {o.payment_method === 'cod' ? 'COD' : o.payment_method}</span>
+            </div>
+            <div className="order-items">
+              {o.items?.map((it, idx) => (
+                <div key={idx} className="order-item-row">
+                  <span className="item-name">{it.product}</span>
+                  <span className="item-qty">SL: {it.quantity}</span>
+                  <span className="item-price">{formatPrice(it.price * it.quantity)}</span>
+                </div>
+              ))}
+            </div>
+            <div className="order-actions">
+              <button
+                onClick={() => navigate(`/orders/${o.order_id}`)}
+                className="order-detail-btn"
+              >
+                Chi tiết
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   const renderWishlistTab = () => (
     <div className="empty-wishlist">

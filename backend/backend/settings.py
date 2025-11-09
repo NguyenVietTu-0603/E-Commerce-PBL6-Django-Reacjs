@@ -33,13 +33,12 @@ INSTALLED_APPS = [
     
     # Third party apps
     'rest_framework',
-    'rest_framework_simplejwt',  # ⬅️ THÊM DÒNG NÀY
-    'rest_framework_simplejwt.token_blacklist',  # ⬅️ THÊM DÒNG NÀY
     'corsheaders',
     
     # Local apps
-    'users',
     'products',
+    'users',
+    'orders',
 ]
 
 MIDDLEWARE = [

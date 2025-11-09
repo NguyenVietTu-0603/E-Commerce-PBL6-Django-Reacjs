@@ -10,6 +10,22 @@ import {
 } from '../utils/locationsData';
 import '../assets/Checkout.css';
 
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:8000';
+
+async function safeFetchJSON(url, options = {}) {
+  const res = await fetch(url, options);
+  const ct = res.headers.get('content-type') || '';
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`HTTP ${res.status} - ${txt.slice(0,200)}`);
+  }
+  if (!ct.includes('application/json')) {
+    const txt = await res.text().catch(() => '');
+    throw new Error('Server trả về non-JSON: ' + txt.slice(0,200));
+  }
+  return res.json();
+}
+
 export default function Checkout() {
   const navigate = useNavigate();
   const { cartItems, clearCart, getCartTotal } = useCart();
@@ -51,24 +67,24 @@ export default function Checkout() {
       }));
 
       // Load user's saved address if exists
-      fetch('/api/user/address/', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.address) {
-            setFormData(prev => ({
-              ...prev,
-              address: data.address || '',
-              city: data.city || '',
-              district: data.district || '',
-              ward: data.ward || ''
-            }));
-          }
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        safeFetchJSON(`${API_BASE}/api/user/address/`, {
+          headers: { Authorization: `Bearer ${token}` }
         })
-        .catch(err => console.error('Error loading address:', err));
+          .then(data => {
+            if (data && (data.address || data.city || data.district || data.ward)) {
+              setFormData(prev => ({
+                ...prev,
+                address: data.address || '',
+                city: data.city || '',
+                district: data.district || '',
+                ward: data.ward || ''
+              }));
+            }
+          })
+          .catch(err => console.error('Error loading address:', err.message));
+      }
     }
 
     // Load cities from mock data instead of API
@@ -135,62 +151,19 @@ export default function Checkout() {
     e.preventDefault();
     
     if (!validateForm()) return;
+    if (getCartTotal() <= 0 || cartItems.length === 0) return;
 
     setLoading(true);
-
     try {
-      // Mock order submission - sử dụng khi backend chưa sẵn sàng
-      const useMockAPI = true; // Đổi thành false khi backend ready
-      
-      if (useMockAPI) {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        const mockOrderId = `ORD${Date.now().toString().slice(-8)}`;
-        
-        console.log('📦 Mock Order Created:', {
-          order_id: mockOrderId,
-          customer_info: {
-            full_name: formData.fullName,
-            phone: formData.phone,
-            email: formData.email
-          },
-          shipping_address: {
-            address: formData.address,
-            ward: formData.ward,
-            district: formData.district,
-            city: formData.city
-          },
-          payment_method: formData.paymentMethod,
-          notes: formData.notes,
-          items: cartItems,
-          total_amount: getCartTotal()
-        });
-
-        // Clear cart
-        clearCart();
-
-        // Navigate to success page
-        navigate('/order-success', { 
-          state: { orderId: mockOrderId } 
-        });
-        
-        return;
-      }
-
-      // Real API call
+      // Gọi API thật: payload phẳng theo backend
       const orderData = {
-        customer_info: {
-          full_name: formData.fullName,
-          phone: formData.phone,
-          email: formData.email
-        },
-        shipping_address: {
-          address: formData.address,
-          ward: formData.ward,
-          district: formData.district,
-          city: formData.city
-        },
+        full_name: formData.fullName,
+        phone: formData.phone,
+        email: formData.email,
+        address: formData.address,
+        ward: formData.ward,
+        district: formData.district,
+        city: formData.city,
         payment_method: formData.paymentMethod,
         notes: formData.notes,
         items: cartItems.map(item => ({
@@ -203,42 +176,24 @@ export default function Checkout() {
         total_amount: getCartTotal()
       };
 
-      console.log('📤 Sending order data:', orderData);
-
-      const response = await fetch('http://localhost:8000/api/orders/', {
+      const token = localStorage.getItem('access_token');
+      const result = await safeFetchJSON(`${API_BASE}/api/orders/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(user && { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` })
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify(orderData)
       });
 
-      console.log('📥 Response status:', response.status);
-
-      // Check if response is JSON
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        console.error('❌ Non-JSON response:', text.substring(0, 200));
-        throw new Error('Server trả về dữ liệu không hợp lệ. Vui lòng kiểm tra backend.');
-      }
-
-      const result = await response.json();
-      console.log('📥 Response data:', result);
-
-      if (!response.ok) {
-        throw new Error(result.message || result.detail || 'Đặt hàng thất bại');
-      }
-
-      if (!result.success) {
+      if (!result.success || !result.order?.order_id) {
         throw new Error(result.message || 'Đặt hàng thất bại');
       }
 
-      // Clear cart after successful order
+      // Clear cart
       clearCart();
 
-      // Navigate to success page with order ID
+      // Navigate to success page
       navigate('/order-success', { 
         state: { orderId: result.order.order_id } 
       });
@@ -248,10 +203,10 @@ export default function Checkout() {
       
       let errorMessage = 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!';
       
-      if (error.message.includes('Failed to fetch')) {
-        errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng hoặc đảm bảo backend đang chạy.';
-      } else if (error.message.includes('JSON')) {
-        errorMessage = 'Lỗi xử lý dữ liệu từ server. Vui lòng kiểm tra backend API.';
+      if (/Failed to fetch/i.test(error.message)) {
+        errorMessage = 'Không thể kết nối đến server. Hãy kiểm tra backend.';
+      } else if (/non-JSON|Server trả về non-JSON/i.test(error.message)) {
+        errorMessage = 'Backend trả về dữ liệu không hợp lệ.';
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -421,7 +376,7 @@ export default function Checkout() {
               <div className="order-items">
                 {cartItems.map((item, index) => (
                   <div key={`${item.id}-${item.color}-${item.size}-${index}`} className="order-item">
-                    <img src={item.image || '/default-product.png'} alt={item.name} />
+                    <img src={item.image || (process.env.PUBLIC_URL + '/default-product.png')} alt={item.name} />
                     <div className="item-info">
                       <h4>{item.name}</h4>
                       <div className="item-variants">
