@@ -1,19 +1,30 @@
+# ------------------------
 # Python
+# ------------------------
 venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.sqlite3
 
-# Django
-/staticfiles/
-media/
-
-# Node
+# ------------------------
+# Node / Frontend
+# ------------------------
 node_modules/
 dist/
 build/
+*.log
 
-# Environment
-.env
+# ------------------------
+# Project scripts & libraries
+# ------------------------
+script/
+lib/
 
-# Other
-.DS_Store
+# ------------------------
+# IDE / Editor
+# ------------------------
+.vscode/
+.idea/
+*.swp

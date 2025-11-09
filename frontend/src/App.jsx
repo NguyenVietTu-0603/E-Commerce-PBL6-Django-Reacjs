@@ -21,6 +21,8 @@ import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
+import Chat from './pages/Chat';
+import ShopChat from './pages/ShopChat';
 
 function App() {
   return (
@@ -122,6 +124,11 @@ function App() {
               {/* Checkout and Order Success */}
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/order-success" element={<OrderSuccess />} />
+
+              {/* Chat */}
+              <Route path="/chat/:shopId" element={<Chat />} />
+              <Route path="/shop-chat/:shopId/:buyerId" element={<ShopChat />} />
+
 
               {/* Default */}
               <Route path="*" element={<RoleBasedRedirect />} />

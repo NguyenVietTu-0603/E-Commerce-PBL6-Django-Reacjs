@@ -104,7 +104,7 @@ export default function ProductDetail() {
     }
 
     function handleChatWithShop() {
-        navigate(`/chat/${shop.id}`);
+        navigate(`/chat/${shop.id}?product=${id}`);
     }
 
     function handleViewShop() {
