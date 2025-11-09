@@ -50,11 +50,6 @@ class ProductViewSet(mixins.ListModelMixin,
                     mixins.UpdateModelMixin,
                     mixins.DestroyModelMixin,
                     viewsets.GenericViewSet):
-    """
-    Cho phép GET/POST/PUT/PATCH/DELETE qua API.
-    - Dùng ProductCreateSerializer cho create/update (để nhận image upload).
-    - Dùng ProductSerializer cho read.
-    """
     queryset = Product.objects.all().order_by('-created_at')
     parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
 
