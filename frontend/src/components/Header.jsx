@@ -134,7 +134,7 @@ export default function Header({
                 right: '6px',
                 minWidth: '18px',
                 height: '18px',
-                background: '#22c55e',
+                background: '#666666',
                 color: 'white',
                 borderRadius: '50%',
                 fontSize: '10px',

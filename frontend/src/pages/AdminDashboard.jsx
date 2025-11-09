@@ -101,7 +101,7 @@ const styles = {
     gap: '15px',
   },
   statCard: {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'linear-gradient(135deg, #1a1a1a 0%, #000000 100%)',
     padding: '20px',
     borderRadius: '8px',
     textAlign: 'center',

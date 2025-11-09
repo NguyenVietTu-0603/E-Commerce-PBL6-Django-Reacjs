@@ -136,12 +136,12 @@
 .form-group input.error,
 .form-group select.error,
 .form-group textarea.error {
-  border-color: #dc3545;
-  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+  border-color: #666666;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
 }
 
 .error-message {
-  color: #dc3545;
+  color: #666666;
   font-size: 12px;
   font-weight: 500;
   margin-top: 6px;
@@ -316,14 +316,14 @@
 }
 
 .free-shipping {
-  color: #22c55e;
+  color: #666666;
   font-weight: 500;
 }
 
 .place-order-btn {
   width: 100%;
   background: var(--accent);
-  color: var(--text-dark);
+  color: var(--text-light);
   padding: 16px 24px;
   border: none;
   border-radius: var(--radius-sm);
@@ -382,52 +382,4 @@
   background-repeat: no-repeat;
   background-size: 16px;
   padding-right: 40px;
-}
-
-/* Mobile responsive */
-@media (max-width: 768px) {
-  .checkout-container {
-    padding: 16px;
-  }
-  
-  .checkout-content {
-    grid-template-columns: 1fr;
-    gap: 32px;
-    padding: 24px;
-  }
-  
-  .form-row {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-  
-  .checkout-steps {
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .step:not(:last-child)::after {
-    content: '↓';
-    margin: 8px 0 0 0;
-    position: static;
-  }
-  
-  .order-item {
-    flex-direction: row;
-    align-items: center;
-  }
-  
-  .order-item img {
-    width: 48px;
-    height: 48px;
-  }
-  
-  .checkout-header h1 {
-    font-size: 2rem;
-  }
-  
-  .security-badges {
-    flex-direction: column;
-    gap: 8px;
-  }
 }

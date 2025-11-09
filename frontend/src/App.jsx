@@ -19,6 +19,8 @@ import Home from './pages/Home';
 import CategoryPage from './pages/CategoryPage.jsx';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import OrderSuccess from './pages/OrderSuccess';
 
 function App() {
   return (
@@ -116,6 +118,10 @@ function App() {
                   </PrivateRoute>
                 }
               />
+
+              {/* Checkout and Order Success */}
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/order-success" element={<OrderSuccess />} />
 
               {/* Default */}
               <Route path="*" element={<RoleBasedRedirect />} />
