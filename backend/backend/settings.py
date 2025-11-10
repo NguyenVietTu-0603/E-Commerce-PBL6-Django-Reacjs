@@ -33,13 +33,14 @@ INSTALLED_APPS = [
     
     # Third party apps
     'rest_framework',
-    'rest_framework_simplejwt',  # ⬅️ THÊM DÒNG NÀY
-    'rest_framework_simplejwt.token_blacklist',  # ⬅️ THÊM DÒNG NÀY
     'corsheaders',
+    'channels',    # thêm
     
     # Local apps
-    'users',
     'products',
+    'users',
+    'orders',
+    'chat',        # thêm app mới
 ]
 
 MIDDLEWARE = [
@@ -72,6 +73,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
+ASGI_APPLICATION = 'backend.asgi.application'
 
 
 # Database
@@ -208,4 +210,10 @@ SIMPLE_JWT = {
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
     'TOKEN_TYPE_CLAIM': 'token_type',
     'JTI_CLAIM': 'jti',
+}
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    }
 }

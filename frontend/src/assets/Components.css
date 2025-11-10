@@ -50,13 +50,13 @@
 }
 
 .breadcrumb a {
-  color: #007bff;
+  color: #000000;
   text-decoration: none;
   transition: color 0.3s;
 }
 
 .breadcrumb a:hover {
-  color: #0056b3;
+  color: #333333;
 }
 
 .breadcrumb span {
@@ -86,7 +86,7 @@
 
 .empty-action-btn {
   display: inline-block;
-  background-color: #007bff;
+  background-color: #000000;
   color: white;
   padding: 12px 30px;
   text-decoration: none;
@@ -96,7 +96,7 @@
 }
 
 .empty-action-btn:hover {
-  background-color: #0056b3;
+  background-color: #333333;
 }
 
 /* Pagination Component */
@@ -122,14 +122,14 @@
 
 .page-btn:hover:not(:disabled) {
   background-color: #f8f9fa;
-  border-color: #007bff;
-  color: #007bff;
+  border-color: #000000;
+  color: #000000;
 }
 
 .page-btn.active {
-  background-color: #007bff;
+  background-color: #000000;
   color: white;
-  border-color: #007bff;
+  border-color: #000000;
 }
 
 .page-btn:disabled {
@@ -170,8 +170,8 @@
 
 .clear-filters-btn {
   background: none;
-  border: 1px solid #dc3545;
-  color: #dc3545;
+  border: 1px solid #666666;
+  color: #666666;
   padding: 6px 12px;
   border-radius: 6px;
   cursor: pointer;
@@ -180,7 +180,7 @@
 }
 
 .clear-filters-btn:hover {
-  background-color: #dc3545;
+  background-color: #666666;
   color: white;
 }
 
@@ -214,11 +214,11 @@
 
 .filter-option:hover {
   background-color: #f8f9fa;
-  color: #007bff;
+  color: #000000;
 }
 
 .filter-option.active {
-  background-color: #007bff;
+  background-color: #000000;
   color: white;
 }
 
@@ -264,7 +264,7 @@
 
 .sort-select:focus {
   outline: none;
-  border-color: #007bff;
+  border-color: #000000;
 }
 
 /* New Styles */
@@ -292,42 +292,4 @@
   padding: 12px;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .page-header h1 {
-    font-size: 1.8rem;
-  }
-  
-  .breadcrumb {
-    flex-direction: column;
-    gap: 5px;
-  }
-  
-  .breadcrumb-item {
-    justify-content: center;
-  }
-  
-  .filters-sidebar {
-    position: static;
-    order: 2;
-  }
-  
-  .price-range {
-    flex-direction: column;
-    gap: 5px;
-  }
-  
-  .price-range span {
-    display: none;
-  }
-  
-  .pagination {
-    flex-wrap: wrap;
-    gap: 5px;
-  }
-  
-  .page-btn {
-    padding: 8px 12px;
-    font-size: 0.8rem;
-  }
-}
+

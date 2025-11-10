@@ -3,7 +3,9 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from .serializers import ProductCreateSerializer, CategorySerializer, ProductSerializer
 from .models import Product, Category
-from rest_framework import viewsets, permissions, parsers
+from rest_framework import viewsets, mixins
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework import parsers
 
 class ProductCreateView(generics.CreateAPIView):
     queryset = Product.objects.all()
@@ -42,12 +44,12 @@ class CategoryListCreateView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
 
 
-class ProductViewSet(viewsets.ModelViewSet):
-    """
-    Cho phép GET/POST/PUT/PATCH/DELETE qua API.
-    - Dùng ProductCreateSerializer cho create/update (để nhận image upload).
-    - Dùng ProductSerializer cho read.
-    """
+class ProductViewSet(mixins.ListModelMixin,
+                    mixins.RetrieveModelMixin,
+                    mixins.CreateModelMixin,
+                    mixins.UpdateModelMixin,
+                    mixins.DestroyModelMixin,
+                    viewsets.GenericViewSet):
     queryset = Product.objects.all().order_by('-created_at')
     parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
 
@@ -61,7 +63,12 @@ class ProductViewSet(viewsets.ModelViewSet):
             return ProductCreateSerializer
         return ProductSerializer
 
-class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+class CategoryViewSet(mixins.ListModelMixin,
+                     mixins.RetrieveModelMixin,
+                     mixins.CreateModelMixin,
+                     mixins.UpdateModelMixin,
+                     mixins.DestroyModelMixin,
+                     viewsets.GenericViewSet):
     queryset = Category.objects.all().order_by('name')
     serializer_class = CategorySerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAuthenticatedOrReadOnly]

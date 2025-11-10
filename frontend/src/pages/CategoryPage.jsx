@@ -1,36 +1,25 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import Layout from '../components/Layout.jsx';
-// import CategoryNav from '../components/CategoryNav.jsx';
-import ProductGrid from '../components/ProductGrid.jsx';
-import FiltersSidebar from '../components/FiltersSidebar.jsx';
-import PageHeader from '../components/PageHeader.jsx';
-import EmptyState from '../components/EmptyState.jsx';
-import Pagination from '../components/Pagination.jsx';
+import ProductCard from '../components/ProductCard';
 import '../assets/CategoryPage.css';
-import '../assets/Components.css';
 
 export default function CategoryPage() {
-  // support multiple possible param names (slug, categoryName, category)
   const params = useParams();
   const rawCategoryParam = params.slug ?? params.categoryName ?? params.category ?? '';
   const slugFromUrl = rawCategoryParam ? decodeURIComponent(rawCategoryParam) : '';
   const navigate = useNavigate();
 
-  // data
+  // Data
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
 
-  // ui/filter state
+  // UI/Filter state
   const [query, setQuery] = useState('');
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [sortBy, setSortBy] = useState('relevance');
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // filter panel
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
@@ -39,16 +28,21 @@ export default function CategoryPage() {
       setLoading(true);
       setError(null);
       try {
-        const [cRes, pRes] = await Promise.all([axios.get('/api/categories/'), axios.get('/api/products/')]);
+        const [cRes, pRes] = await Promise.all([
+          fetch('http://localhost:8000/api/categories/').then(r => r.json()),
+          fetch('http://localhost:8000/api/products/').then(r => r.json())
+        ]);
         if (cancelled) return;
-        const cats = Array.isArray(cRes.data) ? cRes.data : (cRes.data.results ?? []);
-        const prods = Array.isArray(pRes.data) ? pRes.data : (pRes.data.results ?? []);
+        
+        const cats = Array.isArray(cRes) ? cRes : (cRes.results ?? []);
+        const prods = Array.isArray(pRes) ? pRes : (pRes.results ?? []);
+        
         setCategories(cats);
         setProducts(prods);
       } catch (err) {
         if (cancelled) return;
         console.error('CategoryPage load error', err);
-        setError(err.response?.data ?? err.message ?? 'Lỗi khi tải dữ liệu');
+        setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -57,7 +51,7 @@ export default function CategoryPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // determine active category object (prefer slug match)
+  // Determine active category
   const activeCategoryObj = useMemo(() => {
     if (!slugFromUrl) return null;
     return categories.find(c => {
@@ -69,7 +63,7 @@ export default function CategoryPage() {
     }) ?? null;
   }, [categories, rawCategoryParam, slugFromUrl]);
 
-  // helper to match product -> category robustly
+  // Product matching
   function productMatchesCategory(prod, identifier) {
     if (!identifier) return true;
     const idNorm = String(identifier).toLowerCase();
@@ -78,47 +72,40 @@ export default function CategoryPage() {
 
     if (typeof pc === 'string' || typeof pc === 'number') {
       const v = String(pc).toLowerCase();
-      if (v === idNorm) return true;
-      if (v.includes(idNorm) || idNorm.includes(v)) return true;
-      return false;
+      return v === idNorm || v.includes(idNorm) || idNorm.includes(v);
     }
 
-    // object
     const pid = String(pc.id ?? pc.pk ?? '').toLowerCase();
     const pname = String(pc.name ?? pc.title ?? '').toLowerCase();
     const pslug = String(pc.slug ?? '').toLowerCase();
 
-    if (pid && pid === idNorm) return true;
-    if (pname && pname === idNorm) return true;
-    if (pslug && pslug === idNorm) return true;
-    if ((pname && pname.includes(idNorm)) || (pslug && pslug.includes(idNorm))) return true;
-    return false;
+    return pid === idNorm || pname === idNorm || pslug === idNorm || 
+           pname.includes(idNorm) || pslug.includes(idNorm);
   }
 
-  // filtered + sorted products
+  // Filtered products
   const filteredProducts = useMemo(() => {
-    const activeIdentifier = activeCategoryObj ? (activeCategoryObj.slug ?? activeCategoryObj.name ?? String(activeCategoryObj.id)) : (slugFromUrl || '');
+    const activeIdentifier = activeCategoryObj 
+      ? (activeCategoryObj.slug ?? activeCategoryObj.name ?? String(activeCategoryObj.id))
+      : (slugFromUrl || '');
     const q = (query || '').trim().toLowerCase();
 
     const list = (products || []).filter(product => {
-      // category
-      if (activeIdentifier) {
-        if (!productMatchesCategory(product, activeIdentifier)) return false;
-      }
-      // query
+      if (activeIdentifier && !productMatchesCategory(product, activeIdentifier)) return false;
+      
       if (q) {
         const name = String(product.name ?? '').toLowerCase();
         const desc = String(product.description ?? '').toLowerCase();
         if (!name.includes(q) && !desc.includes(q)) return false;
       }
-      // price range
+      
       const price = Number(product.price ?? 0);
       if (priceRange.min && price < Number(priceRange.min)) return false;
       if (priceRange.max && price > Number(priceRange.max)) return false;
+      
       return true;
     });
 
-    // sort
     switch (sortBy) {
       case 'price-low':
         list.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
@@ -127,7 +114,7 @@ export default function CategoryPage() {
         list.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
         break;
       case 'name':
-        list.sort((a, b) => (String(a.name) || '').localeCompare(String(b.name) || ''));
+        list.sort((a, b) => String(a.name).localeCompare(String(b.name)));
         break;
       case 'newest':
         list.sort((a, b) => (b.id || 0) - (a.id || 0));
@@ -139,131 +126,263 @@ export default function CategoryPage() {
     return list;
   }, [products, activeCategoryObj, slugFromUrl, query, priceRange, sortBy]);
 
-  // pagination
+  // Pagination
   const ITEMS_PER_PAGE = 12;
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+  
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
+
   const paginatedProducts = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredProducts, currentPage]);
 
-  // handlers passed into FiltersSidebar
-  function handleCategoryChange(catSlugOrName) {
-    // catSlugOrName may be slug or name; navigate to slug if possible
-    if (!catSlugOrName) { navigate('/'); return; }
-    const found = categories.find(c => (String(c.slug) === String(catSlugOrName) || String(c.name) === String(catSlugOrName) || String(c.id) === String(catSlugOrName)));
+  // Handlers
+  const handleCategoryChange = (catSlugOrName) => {
+    if (!catSlugOrName) {
+      navigate('/products');
+      return;
+    }
+    const found = categories.find(c => 
+      String(c.slug) === String(catSlugOrName) || 
+      String(c.name) === String(catSlugOrName) || 
+      String(c.id) === String(catSlugOrName)
+    );
     const toSlug = found ? (found.slug ?? found.name) : catSlugOrName;
     navigate(`/category/${encodeURIComponent(toSlug)}`);
-  }
+    setShowFilters(false);
+  };
 
-  function handlePriceRangeChange(r) {
-    if (typeof r === 'function') setPriceRange(prev => r(prev));
-    else setPriceRange(r ?? { min: '', max: '' });
+  const handleClearFilters = () => {
+    setQuery('');
+    setPriceRange({ min: '', max: '' });
+    setSortBy('relevance');
     setCurrentPage(1);
-  }
-  function handleSortChange(s) { setSortBy(s); setCurrentPage(1); }
-  function handleQueryChange(q) { setQuery(q); setCurrentPage(1); }
+  };
 
-  function handleToggleFilters() { setShowFilters(v => !v); }
-  function handleClearFilters() {
-    setQuery(''); setPriceRange({ min: '', max: '' }); setSortBy('relevance'); setCurrentPage(1);
+  if (loading) {
+    return (
+      <div className="category-page">
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p className="loading-text">Đang tải sản phẩm...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="category-page">
+        <div className="error-container">
+          <div className="error-icon">⚠️</div>
+          <h2>Có lỗi xảy ra</h2>
+          <p>{error}</p>
+          <button onClick={() => window.location.reload()} className="btn btn-primary">
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <Layout className="category-page">
+    <div className="category-page">
       <div className="category-container">
-        <PageHeader
-          title={activeCategoryObj ? activeCategoryObj.name : (slugFromUrl || 'Tất cả')}
-          subtitle={`Kết quả cho ${activeCategoryObj ? activeCategoryObj.name : (slugFromUrl || 'Tất cả')}`}
-          resultsCount={filteredProducts.length}
-          breadcrumb={[{ text: 'Trang chủ', link: '/' }, { text: activeCategoryObj ? activeCategoryObj.name : (slugFromUrl || 'Tất cả') }]}
-          className="category-header"
-        />
+        {/* Header */}
+        <div className="category-header">
+          <div className="breadcrumb">
+            <a href="/">Trang chủ</a>
+            <span className="breadcrumb-separator">/</span>
+            <span className="breadcrumb-current">
+              {activeCategoryObj?.name || slugFromUrl || 'Tất cả sản phẩm'}
+            </span>
+          </div>
+          
+          <h1 className="category-title">
+            {activeCategoryObj?.name || slugFromUrl || 'Tất cả sản phẩm'}
+          </h1>
+          
+          <p className="category-subtitle">
+            {filteredProducts.length} sản phẩm
+          </p>
+        </div>
 
-        <div className="category-content" style={{ display: 'flex', gap: 16 }}>
-          {/* Inline sidebar for wide screens */}
-          <aside className="filters-column" style={{ width: 300, display: showFilters ? 'none' : 'block' }}>
-            <FiltersSidebar
-              categories={[{ name: 'Tất cả', slug: '' }, ...categories]}
-              selectedCategory={(activeCategoryObj && (activeCategoryObj.slug ?? activeCategoryObj.name)) || (slugFromUrl || '')}
-              onCategoryChange={handleCategoryChange}
-              priceRange={priceRange}
-              onPriceRangeChange={handlePriceRangeChange}
-              sortBy={sortBy}
-              onSortChange={handleSortChange}
-              onClearFilters={handleClearFilters}
-              onQueryChange={handleQueryChange}
-              showCategoryLinks={true}
-            />
-          </aside>
+        <div className="category-content">
+          {/* Sidebar Filters */}
+          <aside className={`filters-sidebar ${showFilters ? 'mobile-open' : ''}`}>
+            <div className="filters-header">
+              <h3>Bộ lọc</h3>
+              <button 
+                className="filters-close" 
+                onClick={() => setShowFilters(false)}
+              >
+                ✕
+              </button>
+            </div>
 
-          {/* Overlay panel when toggled on small/explicit */}
-          {showFilters && (
-            <div
-              className="filters-overlay"
-              style={{
-                position: 'fixed',
-                top: 80,
-                right: 20,
-                width: 360,
-                maxWidth: '95vw',
-                height: '80vh',
-                overflowY: 'auto',
-                background: '#fff',
-                boxShadow: '0 12px 34px rgba(0,0,0,0.2)',
-                borderRadius: 8,
-                zIndex: 9999,
-                padding: 12
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <strong>Bộ lọc</strong>
-                <div>
-                  <button type="button" onClick={() => setShowFilters(false)} style={{ marginRight: 8 }}>Đóng</button>
-                </div>
-              </div>
-
-              <FiltersSidebar
-                categories={[{ name: 'Tất cả', slug: '' }, ...categories]}
-                selectedCategory={(activeCategoryObj && (activeCategoryObj.slug ?? activeCategoryObj.name)) || (slugFromUrl || '')}
-                onCategoryChange={(c) => { handleCategoryChange(c); setShowFilters(false); }}
-                priceRange={priceRange}
-                onPriceRangeChange={(r) => { handlePriceRangeChange(r); }}
-                sortBy={sortBy}
-                onSortChange={(s) => { handleSortChange(s); }}
-                onClearFilters={() => { handleClearFilters(); setShowFilters(false); }}
-                onQueryChange={(q) => { handleQueryChange(q); }}
-                showCategoryLinks
+            {/* Search */}
+            <div className="filter-section">
+              <label className="filter-label">Tìm kiếm</label>
+              <input
+                type="text"
+                className="filter-input"
+                placeholder="Tìm sản phẩm..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
               />
             </div>
-          )}
 
-          <div className="products-section" style={{ flex: 1 }}>
-            {loading ? (
-              <div>Đang tải sản phẩm...</div>
-            ) : error ? (
-              <div style={{ color: 'red' }}>{String(error)}</div>
-            ) : filteredProducts.length === 0 ? (
-              <EmptyState
-                icon="📦"
-                title="Không có sản phẩm nào"
-                description="Hiện tại chưa có sản phẩm trong danh mục này"
-                actionText="Xem tất cả sản phẩm"
-                actionLink="/"
-                className="no-results"
-              />
+            {/* Categories */}
+            <div className="filter-section">
+              <label className="filter-label">Danh mục</label>
+              <div className="category-list">
+                <button
+                  className={`category-item ${!slugFromUrl ? 'active' : ''}`}
+                  onClick={() => handleCategoryChange('')}
+                >
+                  Tất cả
+                </button>
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    className={`category-item ${
+                      activeCategoryObj?.id === cat.id ? 'active' : ''
+                    }`}
+                    onClick={() => handleCategoryChange(cat.slug || cat.name)}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Price Range */}
+            <div className="filter-section">
+              <label className="filter-label">Khoảng giá</label>
+              <div className="price-range-inputs">
+                <input
+                  type="number"
+                  className="filter-input"
+                  placeholder="Từ"
+                  value={priceRange.min}
+                  onChange={(e) => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
+                />
+                <span className="price-separator">-</span>
+                <input
+                  type="number"
+                  className="filter-input"
+                  placeholder="Đến"
+                  value={priceRange.max}
+                  onChange={(e) => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            {/* Sort */}
+            <div className="filter-section">
+              <label className="filter-label">Sắp xếp</label>
+              <select
+                className="filter-select"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="relevance">Liên quan</option>
+                <option value="price-low">Giá: Thấp đến cao</option>
+                <option value="price-high">Giá: Cao đến thấp</option>
+                <option value="name">Tên: A-Z</option>
+                <option value="newest">Mới nhất</option>
+              </select>
+            </div>
+
+            {/* Clear Filters */}
+            <button className="btn-clear-filters" onClick={handleClearFilters}>
+              Xóa bộ lọc
+            </button>
+          </aside>
+
+          {/* Products Section */}
+          <div className="products-section">
+            {/* Toolbar */}
+            <div className="products-toolbar">
+              <button 
+                className="btn-toggle-filters"
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                <span>🔍</span>
+                Bộ lọc
+              </button>
+              
+              <div className="results-info">
+                Hiển thị {paginatedProducts.length} / {filteredProducts.length} sản phẩm
+              </div>
+            </div>
+
+            {/* Products Grid */}
+            {filteredProducts.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">📦</div>
+                <h2>Không tìm thấy sản phẩm</h2>
+                <p>Vui lòng thử điều chỉnh bộ lọc hoặc tìm kiếm khác</p>
+                <button className="btn btn-primary" onClick={handleClearFilters}>
+                  Xóa bộ lọc
+                </button>
+              </div>
             ) : (
               <>
-                <ProductGrid products={paginatedProducts} />
-                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={(p) => setCurrentPage(p)} />
+                <div className="products-grid">
+                  {paginatedProducts.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="pagination">
+                    <button
+                      className="pagination-btn"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      ← Trước
+                    </button>
+                    
+                    <div className="pagination-pages">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                        <button
+                          key={page}
+                          className={`pagination-page ${currentPage === page ? 'active' : ''}`}
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      className="pagination-btn"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Sau →
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </div>
         </div>
       </div>
-    </Layout>
+
+      {/* Mobile Overlay */}
+      {showFilters && (
+        <div 
+          className="filters-overlay-backdrop"
+          onClick={() => setShowFilters(false)}
+        />
+      )}
+    </div>
   );
 }

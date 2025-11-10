@@ -9,10 +9,22 @@ class CategorySerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     image = serializers.SerializerMethodField()
+    seller_name = serializers.SerializerMethodField()  # 👈 thêm trường mới
 
     class Meta:
         model = Product
-        fields = ["id", "name", "description", "price", "image", "category", "created_at"]
+        fields = [
+            "id",
+            "name",
+            "description",
+            "price",
+            "image",
+            "category",
+            "seller_id",
+            "seller_name",  # 👈 hiển thị tên shop
+            "stock",
+            "created_at",
+        ]
 
     def get_image(self, obj):
         request = self.context.get("request")
@@ -24,6 +36,12 @@ class ProductSerializer(serializers.ModelSerializer):
             if request is not None:
                 return request.build_absolute_uri(url)
             return url
+        return None
+
+    def get_seller_name(self, obj):
+        """Lấy full_name từ bảng users_user"""
+        if obj.seller_id:
+            return getattr(obj.seller, "full_name", None) or obj.seller.username
         return None
 
 class ProductCreateSerializer(serializers.ModelSerializer):
