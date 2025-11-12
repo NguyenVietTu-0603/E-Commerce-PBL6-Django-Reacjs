@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
-import '../assets/Home.css';  // ⬅️ Chỉ import Home.css
+import '../assets/Home.css';
 
 export default function Home() {
   const [products, setProducts] = useState([]);
@@ -13,7 +13,7 @@ export default function Home() {
     fetch('http://localhost:8000/api/products/')
       .then(res => res.json())
       .then(data => {
-        setProducts(data.slice(0, 8)); // Lấy 8 sản phẩm đầu
+        setProducts(data.slice(0, 20));
       })
       .catch(err => console.error('Error loading products:', err));
 

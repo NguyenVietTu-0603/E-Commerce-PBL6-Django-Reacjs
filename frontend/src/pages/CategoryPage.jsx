@@ -21,6 +21,7 @@ export default function CategoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [imageResults, setImageResults] = useState(null); // danh sách trả về từ search ảnh
 
   useEffect(() => {
     let cancelled = false;
@@ -126,9 +127,14 @@ export default function CategoryPage() {
     return list;
   }, [products, activeCategoryObj, slugFromUrl, query, priceRange, sortBy]);
 
-  // Pagination
+  // Dùng list hiệu lực: nếu có imageResults thì ưu tiên hiển thị
+  const effectiveFiltered = useMemo(() => {
+    if (imageResults) return imageResults;
+    return filteredProducts;
+  }, [imageResults, filteredProducts]);
+
   const ITEMS_PER_PAGE = 12;
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(effectiveFiltered.length / ITEMS_PER_PAGE));
   
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
@@ -136,8 +142,8 @@ export default function CategoryPage() {
 
   const paginatedProducts = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredProducts, currentPage]);
+    return effectiveFiltered.slice(start, start + ITEMS_PER_PAGE);
+  }, [effectiveFiltered, currentPage]);
 
   // Handlers
   const handleCategoryChange = (catSlugOrName) => {
@@ -160,7 +166,41 @@ export default function CategoryPage() {
     setPriceRange({ min: '', max: '' });
     setSortBy('relevance');
     setCurrentPage(1);
+    setImageResults(null); // thoát chế độ tìm bằng ảnh
   };
+
+  async function handleImageFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('http://localhost:8000/api/search/image/?k=48', {
+        method: 'POST',
+        body: fd
+      });
+      const text = await res.text();
+      let json = {};
+      try { json = JSON.parse(text); } catch { /* HTML 404 -> giữ rỗng để báo lỗi */ }
+      if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`);
+
+      const mapped = (json.results || []).map(p => ({
+        ...p,
+        image: p.image, // ProductCard đang dùng field image
+      }));
+      setImageResults(mapped);
+      setCurrentPage(1);
+      setShowFilters(false);
+    } catch (err) {
+      console.error(err);
+      setError(String(err?.message || 'Tìm kiếm bằng ảnh thất bại.'));
+    } finally {
+      setLoading(false);
+      e.target.value = '';
+    }
+  }
 
   if (loading) {
     return (
@@ -314,9 +354,21 @@ export default function CategoryPage() {
                 <span>🔍</span>
                 Bộ lọc
               </button>
-              
+
+              <label className="btn btn-primary" style={{ cursor: 'pointer', marginLeft: 8 }}>
+                🔎 Tìm bằng ảnh
+                <input type="file" accept="image/*" onChange={handleImageFileChange} style={{ display: 'none' }} />
+              </label>
+
+              {imageResults && (
+                <button className="btn" style={{ marginLeft: 8 }} onClick={() => setImageResults(null)}>
+                  Hủy kết quả ảnh
+                </button>
+              )}
+
               <div className="results-info">
-                Hiển thị {paginatedProducts.length} / {filteredProducts.length} sản phẩm
+                Hiển thị {paginatedProducts.length} / {effectiveFiltered.length} sản phẩm
+                {imageResults && <span style={{ marginLeft: 8, color: '#888' }}>(kết quả từ ảnh)</span>}
               </div>
             </div>
 

@@ -9,7 +9,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     image = serializers.SerializerMethodField()
-    seller_name = serializers.SerializerMethodField()  # 👈 thêm trường mới
+    seller_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -21,7 +21,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "image",
             "category",
             "seller_id",
-            "seller_name",  # 👈 hiển thị tên shop
+            "seller_name",
             "stock",
             "created_at",
         ]

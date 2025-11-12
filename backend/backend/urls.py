@@ -5,10 +5,11 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/payment/", include("payment.urls")),
     path("api/", include("products.urls")),
-    path("api/users/", include("users.urls")),   # <-- đảm bảo có dòng này
-    path("api/auth/", include("users.urls")),    # (tùy, optional)
-    path('api/orders/', include('orders.urls')),  # phải có dòng này
+    path("api/users/", include("users.urls")),
+    path("api/auth/", include("users.urls")),
+    path("api/orders/", include("orders.urls")),
 ]
 
 if settings.DEBUG:
