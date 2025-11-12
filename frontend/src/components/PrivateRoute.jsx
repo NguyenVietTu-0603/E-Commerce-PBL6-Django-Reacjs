@@ -1,13 +1,13 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
-import LoadingSpinner from './LoadingSpinner';
+import Loading from './Loading';
 
 const PrivateRoute = ({ children, allowedRoles = null }) => {
   const { user, loading, getDefaultRoute } = useAuth();
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <Loading />;
   }
 
   // Not authenticated

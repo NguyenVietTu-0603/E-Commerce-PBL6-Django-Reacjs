@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import ProductCard from '../components/ProductCard';
+import ProductGrid from '../components/ProductGrid';
+import ImageSearchUpload from '../components/ImageSearchUpload';
+import Loading from '../components/Loading';
 import '../assets/CategoryPage.css';
 
 export default function CategoryPage() {
@@ -127,13 +129,13 @@ export default function CategoryPage() {
     return list;
   }, [products, activeCategoryObj, slugFromUrl, query, priceRange, sortBy]);
 
-  // Dùng list hiệu lực: nếu có imageResults thì ưu tiên hiển thị
+  // Header count dùng effectiveFiltered thay vì filteredProducts
   const effectiveFiltered = useMemo(() => {
     if (imageResults) return imageResults;
     return filteredProducts;
   }, [imageResults, filteredProducts]);
 
-  const ITEMS_PER_PAGE = 12;
+  const ITEMS_PER_PAGE = 24;
   const totalPages = Math.max(1, Math.ceil(effectiveFiltered.length / ITEMS_PER_PAGE));
   
   useEffect(() => {
@@ -169,46 +171,11 @@ export default function CategoryPage() {
     setImageResults(null); // thoát chế độ tìm bằng ảnh
   };
 
-  async function handleImageFileChange(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      setLoading(true);
-      setError(null);
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('http://localhost:8000/api/search/image/?k=48', {
-        method: 'POST',
-        body: fd
-      });
-      const text = await res.text();
-      let json = {};
-      try { json = JSON.parse(text); } catch { /* HTML 404 -> giữ rỗng để báo lỗi */ }
-      if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`);
-
-      const mapped = (json.results || []).map(p => ({
-        ...p,
-        image: p.image, // ProductCard đang dùng field image
-      }));
-      setImageResults(mapped);
-      setCurrentPage(1);
-      setShowFilters(false);
-    } catch (err) {
-      console.error(err);
-      setError(String(err?.message || 'Tìm kiếm bằng ảnh thất bại.'));
-    } finally {
-      setLoading(false);
-      e.target.value = '';
-    }
-  }
-
+  // replace handleImageFileChange usage bằng ImageSearchUpload
   if (loading) {
     return (
       <div className="category-page">
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p className="loading-text">Đang tải sản phẩm...</p>
-        </div>
+        <Loading message="Đang tải sản phẩm..." />
       </div>
     );
   }
@@ -246,7 +213,7 @@ export default function CategoryPage() {
           </h1>
           
           <p className="category-subtitle">
-            {filteredProducts.length} sản phẩm
+            {effectiveFiltered.length} sản phẩm
           </p>
         </div>
 
@@ -347,7 +314,7 @@ export default function CategoryPage() {
           <div className="products-section">
             {/* Toolbar */}
             <div className="products-toolbar">
-              <button 
+              <button
                 className="btn-toggle-filters"
                 onClick={() => setShowFilters(!showFilters)}
               >
@@ -355,10 +322,17 @@ export default function CategoryPage() {
                 Bộ lọc
               </button>
 
-              <label className="btn btn-primary" style={{ cursor: 'pointer', marginLeft: 8 }}>
-                🔎 Tìm bằng ảnh
-                <input type="file" accept="image/*" onChange={handleImageFileChange} style={{ display: 'none' }} />
-              </label>
+              <ImageSearchUpload
+                k={48}
+                onStart={() => setLoading(true)}
+                onFinish={() => setLoading(false)}
+                onResults={(mapped) => {
+                  setImageResults(mapped);
+                  setCurrentPage(1);
+                  setShowFilters(false);
+                }}
+                onError={(msg) => setError(msg)}
+              />
 
               {imageResults && (
                 <button className="btn" style={{ marginLeft: 8 }} onClick={() => setImageResults(null)}>
@@ -373,7 +347,7 @@ export default function CategoryPage() {
             </div>
 
             {/* Products Grid */}
-            {filteredProducts.length === 0 ? (
+            {effectiveFiltered.length === 0 ? (
               <div className="empty-state">
                 <div className="empty-icon">📦</div>
                 <h2>Không tìm thấy sản phẩm</h2>
@@ -384,11 +358,7 @@ export default function CategoryPage() {
               </div>
             ) : (
               <>
-                <div className="products-grid">
-                  {paginatedProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
+                <ProductGrid products={paginatedProducts} />
 
                 {/* Pagination */}
                 {totalPages > 1 && (

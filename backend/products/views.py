@@ -13,6 +13,7 @@ from clip_service import embed_pil
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from PIL import Image
 import numpy as np
+from django.db.models import Count, Q
 
 class ProductCreateView(generics.CreateAPIView):
     queryset = Product.objects.all()
@@ -70,15 +71,17 @@ class ProductViewSet(mixins.ListModelMixin,
             return ProductCreateSerializer
         return ProductSerializer
 
-class CategoryViewSet(mixins.ListModelMixin,
-                     mixins.RetrieveModelMixin,
-                     mixins.CreateModelMixin,
-                     mixins.UpdateModelMixin,
-                     mixins.DestroyModelMixin,
-                     viewsets.GenericViewSet):
-    queryset = Category.objects.all().order_by('name')
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        return (
+            Category.objects.filter(is_active=True)
+            .annotate(product_count=Count("products", filter=Q(products__is_active=True)))
+            .order_by("name")
+        )
 
 class ImageSearchView(APIView):
     parser_classes = [MultiPartParser]

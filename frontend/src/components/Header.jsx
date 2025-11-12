@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
 import { useCart } from '../utils/CartContext';
 import AuthModal from './AuthModal.jsx';
+import ImageSearchUpload from './ImageSearchUpload.jsx';
 
 export default function Header({
   query = '',
@@ -10,16 +11,19 @@ export default function Header({
   onOpenLogin,
   onOpenRegister,
   onLogout: onLogoutProp,
-  currentUser: currentUserProp
+  currentUser: currentUserProp,
+  onImageSearchResults, // optional callback khi có kết quả tìm ảnh
 }) {
   const navigate = useNavigate();
   const auth = useAuth();
   const { getCartCount } = useCart();
   const currentUser = currentUserProp ?? auth?.user;
-  const logoutFn = onLogoutProp ?? auth?.logout ?? (() => {});
+  const logoutFn = onLogoutProp ?? auth?.logout ?? (() => { });
   const [localQuery, setLocalQuery] = useState(query || '');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login');
+  const [imgSearchLoading, setImgSearchLoading] = useState(false);
+  const [imgSearchError, setImgSearchError] = useState(null);
 
   const firstRender = useRef(true);
   const debounceRef = useRef(null);
@@ -66,9 +70,23 @@ export default function Header({
   }
 
   function handleLogout() {
-    try { logoutFn(); } catch {}
+    try { logoutFn(); } catch { }
     if (auth?.refresh) auth.refresh();
     else window.location.href = '/';
+  }
+
+  function handleImageResults(results) {
+    try {
+      if (onImageSearchResults) {
+        onImageSearchResults(results);
+      } else {
+        // Lưu tạm để trang /search đọc và hiển thị
+        sessionStorage.setItem('imageSearchResults', JSON.stringify(results));
+        navigate('/search?mode=image');
+      }
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   return (
@@ -86,7 +104,7 @@ export default function Header({
             onChange={(e) => {
               setLocalQuery(e.target.value);
               if (!onQueryChange) return;
-              try { onQueryChange(e.target.value); } catch {}
+              try { onQueryChange(e.target.value); } catch { }
             }}
             className="search-input"
           />
@@ -94,16 +112,26 @@ export default function Header({
         </form>
 
         <div className="actions">
+          {imgSearchError && (
+            <span style={{ color: '#cc0000', fontSize: 12, marginRight: 12 }}>
+              {imgSearchError}
+            </span>
+          )}
           {currentUser ? (
             <>
-              {currentUser.user_type === 'buyer' && (
-                <Link to="/dashboard" className="navbar-link">Trang mua hàng</Link>
-              )}
+              <ImageSearchUpload
+                className={`navbar-link ${imgSearchLoading ? 'is-loading' : ''}`}
+                label={imgSearchLoading ? 'Đang tìm...' : '📷 Tìm bằng ảnh'}
+                k={48}
+                onStart={() => { setImgSearchLoading(true); setImgSearchError(null); }}
+                onFinish={() => setImgSearchLoading(false)}
+                onResults={handleImageResults}
+                onError={(msg) => { setImgSearchError(msg); }}
+              />
               {currentUser.user_type === 'seller' && (
                 <Link to="/seller/dashboard" className="navbar-link">Trang bán hàng</Link>
               )}
               <Link to="/profile" className="navbar-link">Trang cá nhân</Link>
-
               <button
                 type="button"
                 className="logout-btn"
@@ -111,7 +139,6 @@ export default function Header({
               >
                 Đăng xuất
               </button>
-
               <img
                 src={currentUser.avatar || '/default-avatar.png'}
                 alt={currentUser.full_name || currentUser.username}
@@ -124,7 +151,6 @@ export default function Header({
               <button type="button" className="action-btn" onClick={openRegister}>Đăng ký</button>
             </>
           )}
-
           <Link to="/cart" className="cart-btn" aria-label="Giỏ hàng" style={{ position: 'relative' }}>
             🛒
             {getCartCount() > 0 && (
@@ -156,22 +182,22 @@ export default function Header({
         initialMode={authMode}
         onClose={() => setIsAuthOpen(false)}
         onLoginSuccess={(user) => {
-          try { 
+          try {
             if (auth?.setUser) auth.setUser(user);
             // ⬇️ THÊM: Reload trang sau khi đăng nhập thành công
             setTimeout(() => {
               window.location.reload();
             }, 100);
-          } catch {}
+          } catch { }
         }}
         onRegisterSuccess={(user) => {
-          try { 
+          try {
             if (auth?.setUser) auth.setUser(user);
             // ⬇️ THÊM: Reload trang sau khi đăng ký thành công
             setTimeout(() => {
               window.location.reload();
             }, 100);
-          } catch {}
+          } catch { }
         }}
       />
     </>

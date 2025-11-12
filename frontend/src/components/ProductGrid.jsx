@@ -1,43 +1,13 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { formatPrice } from '../utils/formatPrice';
+import ProductCard from './ProductCard';
 
-export default function ProductGrid({ products }) {
-  const navigate = useNavigate();
-
-  if (!products || products.length === 0) {
-    return <p style={{ textAlign: 'center', padding: '40px' }}>Không có sản phẩm nào.</p>;
-  }
-
+export default function ProductGrid({ products = [], className = '' }) {
+  if (!Array.isArray(products)) return null;
   return (
-    <div className="product-grid">
-      {products.map((product) => (
-        <div
-          key={product.id}
-          className="product-card"
-          onClick={() => navigate(`/product/${product.id}`)}
-          style={{ cursor: 'pointer' }}
-        >
-          <div className="product-thumb">
-            <img
-              src={product.image || '/default-product.png'}
-              alt={product.name}
-            />
-          </div>
-          <div className="product-body">
-            <h3 className="product-title">{product.name}</h3>
-            <div className="product-meta">
-              <span className="product-price">
-                {formatPrice(product.price)}
-              </span>
-              {product.category_name && (
-                <span className="product-category">{product.category_name}</span>
-              )}
-            </div>
-          </div>
-        </div>
+    <div className={`products-grid ${className}`}>
+      {products.map((p) => (
+        <ProductCard key={p.id} product={p} />
       ))}
     </div>
   );
 }
-

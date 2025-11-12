@@ -15,8 +15,8 @@ export default function ProductCard({ product }) {
       ? product.category
       : product.category?.name ?? product.category?.title ?? '';
 
-  const imageSrc = product.image || '/samba.avif';
-  const defaultImage = '/samba.avif';
+  const defaultImage = '/default-product.png';
+  const imgSrc = product.image || product.image_url || '/default-product.png';
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -42,7 +42,7 @@ export default function ProductCard({ product }) {
         <div className="product-thumb">
           <div className="product-image">
             <img 
-              src={imageError ? defaultImage : imageSrc} 
+              src={imageError ? defaultImage : imgSrc} 
               alt={product.name || 'Product image'}
               loading="lazy"
               onError={handleImageError}
