@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './utils/AuthContext';
 import { CartProvider } from './utils/CartContext';
 import PrivateRoute from './components/PrivateRoute';
 import Header from './components/Header';
+import Layout from './components/Layout';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -23,6 +24,8 @@ import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 import Chat from './pages/Chat';
 import ShopChat from './pages/ShopChat';
+import SearchResults from './pages/SearchResults'; // thêm
+import './assets/Components.css';
 
 function App() {
   return (
@@ -129,6 +132,8 @@ function App() {
               <Route path="/chat/:shopId" element={<Chat />} />
               <Route path="/shop-chat/:shopId/:buyerId" element={<ShopChat />} />
 
+              {/* Search Results */}
+              <Route path="/search" element={<SearchResults />} /> {/* thêm */}
 
               {/* Default */}
               <Route path="*" element={<RoleBasedRedirect />} />

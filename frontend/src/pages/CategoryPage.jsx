@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import ProductCard from '../components/ProductCard';
+import ProductGrid from '../components/ProductGrid';
+import ImageSearchUpload from '../components/ImageSearchUpload';
+import Loading from '../components/Loading';
 import '../assets/CategoryPage.css';
 
 export default function CategoryPage() {
@@ -21,6 +23,7 @@ export default function CategoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [imageResults, setImageResults] = useState(null); // danh sách trả về từ search ảnh
 
   useEffect(() => {
     let cancelled = false;
@@ -126,9 +129,14 @@ export default function CategoryPage() {
     return list;
   }, [products, activeCategoryObj, slugFromUrl, query, priceRange, sortBy]);
 
-  // Pagination
-  const ITEMS_PER_PAGE = 12;
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+  // Header count dùng effectiveFiltered thay vì filteredProducts
+  const effectiveFiltered = useMemo(() => {
+    if (imageResults) return imageResults;
+    return filteredProducts;
+  }, [imageResults, filteredProducts]);
+
+  const ITEMS_PER_PAGE = 24;
+  const totalPages = Math.max(1, Math.ceil(effectiveFiltered.length / ITEMS_PER_PAGE));
   
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
@@ -136,8 +144,8 @@ export default function CategoryPage() {
 
   const paginatedProducts = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredProducts, currentPage]);
+    return effectiveFiltered.slice(start, start + ITEMS_PER_PAGE);
+  }, [effectiveFiltered, currentPage]);
 
   // Handlers
   const handleCategoryChange = (catSlugOrName) => {
@@ -160,15 +168,14 @@ export default function CategoryPage() {
     setPriceRange({ min: '', max: '' });
     setSortBy('relevance');
     setCurrentPage(1);
+    setImageResults(null); // thoát chế độ tìm bằng ảnh
   };
 
+  // replace handleImageFileChange usage bằng ImageSearchUpload
   if (loading) {
     return (
       <div className="category-page">
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p className="loading-text">Đang tải sản phẩm...</p>
-        </div>
+        <Loading message="Đang tải sản phẩm..." />
       </div>
     );
   }
@@ -206,7 +213,7 @@ export default function CategoryPage() {
           </h1>
           
           <p className="category-subtitle">
-            {filteredProducts.length} sản phẩm
+            {effectiveFiltered.length} sản phẩm
           </p>
         </div>
 
@@ -307,21 +314,40 @@ export default function CategoryPage() {
           <div className="products-section">
             {/* Toolbar */}
             <div className="products-toolbar">
-              <button 
+              <button
                 className="btn-toggle-filters"
                 onClick={() => setShowFilters(!showFilters)}
               >
                 <span>🔍</span>
                 Bộ lọc
               </button>
-              
+
+              <ImageSearchUpload
+                k={48}
+                onStart={() => setLoading(true)}
+                onFinish={() => setLoading(false)}
+                onResults={(mapped) => {
+                  setImageResults(mapped);
+                  setCurrentPage(1);
+                  setShowFilters(false);
+                }}
+                onError={(msg) => setError(msg)}
+              />
+
+              {imageResults && (
+                <button className="btn" style={{ marginLeft: 8 }} onClick={() => setImageResults(null)}>
+                  Hủy kết quả ảnh
+                </button>
+              )}
+
               <div className="results-info">
-                Hiển thị {paginatedProducts.length} / {filteredProducts.length} sản phẩm
+                Hiển thị {paginatedProducts.length} / {effectiveFiltered.length} sản phẩm
+                {imageResults && <span style={{ marginLeft: 8, color: '#888' }}>(kết quả từ ảnh)</span>}
               </div>
             </div>
 
             {/* Products Grid */}
-            {filteredProducts.length === 0 ? (
+            {effectiveFiltered.length === 0 ? (
               <div className="empty-state">
                 <div className="empty-icon">📦</div>
                 <h2>Không tìm thấy sản phẩm</h2>
@@ -332,11 +358,7 @@ export default function CategoryPage() {
               </div>
             ) : (
               <>
-                <div className="products-grid">
-                  {paginatedProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
+                <ProductGrid products={paginatedProducts} />
 
                 {/* Pagination */}
                 {totalPages > 1 && (

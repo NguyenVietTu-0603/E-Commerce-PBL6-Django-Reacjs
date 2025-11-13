@@ -4,6 +4,7 @@ Django settings for backend project.
 
 from pathlib import Path
 from datetime import timedelta
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,28 +25,35 @@ ALLOWED_HOSTS = ['*']  # ⬅️ SỬA: Thêm ['*'] cho development
 # Application definition
 
 INSTALLED_APPS = [
+    "jazzmin",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_extensions',
     
     # Third party apps
     'rest_framework',
     'corsheaders',
-    'channels',    # thêm
+    'channels', 
     
     # Local apps
     'products',
     'users',
     'orders',
-    'chat',        # thêm app mới
+    'chat',
+    'reviews',
 ]
 
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # ⬅️ PHẢI Ở ĐẦU TIÊN
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -133,7 +141,6 @@ MEDIA_ROOT = BASE_DIR / 'media'  # ⬅️ THÊM DÒNG NÀY
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ==================== CUSTOM USER MODEL ====================
-# ⬇️ QUAN TRỌNG NHẤT - PHẢI CÓ DÒNG NÀY
 AUTH_USER_MODEL = 'users.User'
 
 # ==================== CORS SETTINGS ====================
@@ -164,7 +171,6 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-# dev convenience: đổi thành specific origins khi deploy
 CORS_ALLOW_ALL_ORIGINS = True
 
 # ==================== SESSION & CSRF SETTINGS ====================
@@ -181,7 +187,7 @@ CSRF_TRUSTED_ORIGINS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',  # có thể bỏ cho API JSON
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.AllowAny',
@@ -202,11 +208,10 @@ SIMPLE_JWT = {
     
     'AUTH_HEADER_TYPES': ('Bearer',),
     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
-    
-    # ⬇️ QUAN TRỌNG: Phải khớp với primary key của User model
-    'USER_ID_FIELD': 'user_id',  # ⬅️ Field name trong model
-    'USER_ID_CLAIM': 'user_id',  # ⬅️ Claim name trong JWT token
-    
+
+    'USER_ID_FIELD': 'user_id',
+    'USER_ID_CLAIM': 'user_id',
+
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
     'TOKEN_TYPE_CLAIM': 'token_type',
     'JTI_CLAIM': 'jti',
@@ -216,4 +221,40 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
     }
+}
+# ==================== VNPAY SETTINGS ====================
+VNPAY_TMN_CODE = "77382ZSJ"
+VNPAY_HASH_SECRET = "RSEU40X21LAH32U9ZP0N2IY0I3EB8Q26"
+VNPAY_URL = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+VNPAY_RETURN_URL = "http://localhost:3000/order-success"
+
+
+JAZZMIN_SETTINGS = {
+    "site_title": "E-Shop PBL6 Admin",
+    "site_header": "Quản trị cửa hàng PBL6",
+    "site_brand": "PBL6 E-commerce",
+    "welcome_sign": "Chào mừng đến với trang quản trị PBL6 💼",
+    "copyright": "© 2025 PBL6 Shop",
+
+    # Logo (tuỳ chọn)
+    "site_logo": "images/logo.png",  # đường dẫn trong static
+    "login_logo": "images/logo.png",
+    "login_logo_dark": "images/logo.png",
+
+    "theme": "cosmo",
+    "custom_css": "css/admin_custom.css",
+
+    # Sidebar menu
+    "show_sidebar": True,
+    "navigation_expanded": True,
+
+    # Icons cho model (FontAwesome)
+    "icons": {
+        "auth": "fas fa-users",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users-cog",
+        "shop.Product": "fas fa-box",
+        "shop.Order": "fas fa-shopping-cart",
+        "shop.Customer": "fas fa-user-tie",
+    },
 }

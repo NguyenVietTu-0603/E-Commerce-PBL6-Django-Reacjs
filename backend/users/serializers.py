@@ -41,7 +41,7 @@ class UserSerializer(serializers.ModelSerializer):
             'status', 
             'created_at',
             'updated_at',
-            'profile',  # Thông tin profile
+            'profile',
         ]
         read_only_fields = ['user_id', 'created_at', 'updated_at']
 
@@ -77,7 +77,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'full_name': {'required': False},
             'phone': {'required': False},
-            'user_type': {'required': False},  # Default là 'buyer'
+            'user_type': {'required': False},
         }
     
     def validate(self, attrs):
