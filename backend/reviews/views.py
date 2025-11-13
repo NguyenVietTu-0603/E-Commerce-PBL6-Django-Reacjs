@@ -6,6 +6,7 @@ from .models import Review
 from products.models import Product
 from orders.models import OrderItem, Order
 from .serializers import ReviewSerializer
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 PURCHASED_STATUSES = ['paid', 'completed', 'delivered', 'shipping']  # chỉnh theo trạng thái thực tế
 
@@ -37,6 +38,7 @@ def _purchase_status_q():
     return q
 
 class ProductReviewsView(APIView):
+    authentication_classes = (JWTAuthentication,)   # ⬅️ ép dùng JWT (GET vẫn AllowAny ok)
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, product_id):
@@ -83,6 +85,7 @@ class ProductReviewsView(APIView):
         return Response(ser.data, status=status.HTTP_201_CREATED)
 
 class ProductReviewEligibilityView(APIView):
+    authentication_classes = (JWTAuthentication,)
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, product_id):
