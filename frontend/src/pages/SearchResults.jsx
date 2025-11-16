@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import ProductGrid from '../components/ProductGrid';
 import Loading from '../components/Loading';
 import '../assets/SearchResults.css';
+import usePageTitle from '../hooks/usePageTitle';
 
 function useQuery() {
   const { search } = useLocation();
@@ -17,6 +18,11 @@ export default function SearchResults() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
+
+  const title = mode === 'image'
+    ? 'Kết quả tìm kiếm bằng ảnh'
+    : (q ? `Kết quả cho "${q}"` : 'Kết quả tìm kiếm');
+  usePageTitle(title);
 
   useEffect(() => {
     let cancelled = false;

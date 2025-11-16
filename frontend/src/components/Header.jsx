@@ -7,6 +7,7 @@ import ImageSearchUpload from './ImageSearchUpload.jsx';
 import resolveAvatarUrl from '../utils/avatar';
 import { useWishlist } from '../utils/WishlistContext';
 import logoImg from '../assets/img/logo1.png';
+import Icon from './Icon';
 
 export default function Header({
   query = '',
@@ -128,7 +129,13 @@ export default function Header({
             <>
               <ImageSearchUpload
                 className={`navbar-link ${imgSearchLoading ? 'is-loading' : ''}`}
-                label={imgSearchLoading ? 'Đang tìm...' : '📷 Tìm bằng ảnh'}
+                label={imgSearchLoading ? (
+                  <>
+                    <Icon name="spinner" size={14} className="fa-spin" />
+                    <span>Đang tìm...</span>
+                  </>
+                ) : 'Tìm bằng ảnh'}
+                icon={imgSearchLoading ? null : 'image'}
                 k={48}
                 onStart={() => { setImgSearchLoading(true); setImgSearchError(null); }}
                 onFinish={() => setImgSearchLoading(false)}
@@ -141,7 +148,7 @@ export default function Header({
               <Link to="/profile" className="navbar-link">Trang cá nhân</Link>
               {currentUser.user_type === 'buyer' && (
                 <Link to="/wishlist" className="wishlist-link-btn" aria-label="Danh sách yêu thích">
-                  ♡
+                  <Icon name="heart" variant="regular" size={18} />
                   {isBuyer && wishlist.length > 0 && (
                     <span className="cart-dot">{wishlist.length}</span>
                   )}
@@ -167,7 +174,7 @@ export default function Header({
             </>
           )}
           <Link to="/cart" className="cart-btn" aria-label="Giỏ hàng">
-            🛒
+            <Icon name="cart-shopping" size={20} />
             {getCartCount() > 0 && (
               <span className="cart-dot">
                 {getCartCount()}

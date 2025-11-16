@@ -4,6 +4,8 @@ import { useWishlist } from '../utils/WishlistContext';
 import { useCart } from '../utils/CartContext';
 import { formatPrice } from '../utils/formatPrice';
 import '../assets/Wishlist.css';
+import Icon from '../components/Icon';
+import usePageTitle from '../hooks/usePageTitle';
 
 const WishlistPage = () => {
   const {
@@ -16,6 +18,8 @@ const WishlistPage = () => {
     removeSavedItem,
   } = useWishlist();
   const { addToCart } = useCart();
+
+  usePageTitle('Danh sách yêu thích');
 
   const moveWishlistItemToCart = async (item) => {
     addToCart(item.product, 1, { color: item.color, size: item.size });
@@ -70,14 +74,16 @@ const WishlistPage = () => {
                     </div>
                     <div className="wishlist-actions">
                       <button type="button" className="primary" onClick={() => moveWishlistItemToCart(item)}>
-                        + Thêm vào giỏ
+                        <Icon name="cart-plus" size={14} />
+                        <span>Thêm vào giỏ</span>
                       </button>
                       <button
                         type="button"
                         className="ghost"
                         onClick={() => toggleWishlist(item.product, { color: item.color, size: item.size })}
                       >
-                        Xóa
+                        <Icon name="trash" size={14} />
+                        <span>Xóa</span>
                       </button>
                     </div>
                   </div>
@@ -128,10 +134,12 @@ const WishlistPage = () => {
                     </div>
                     <div className="wishlist-actions">
                       <button type="button" className="primary" onClick={() => moveSavedItemToCart(item)}>
-                        Đưa lại vào giỏ
+                        <Icon name="cart-arrow-down" size={14} />
+                        <span>Đưa lại vào giỏ</span>
                       </button>
                       <button type="button" className="ghost" onClick={() => removeSavedItem(item.id)}>
-                        Xóa
+                        <Icon name="trash" size={14} />
+                        <span>Xóa</span>
                       </button>
                     </div>
                   </div>

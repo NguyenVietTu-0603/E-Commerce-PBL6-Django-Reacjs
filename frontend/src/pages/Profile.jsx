@@ -11,6 +11,8 @@ import {
 } from '../utils/locationsData';
 import { formatPrice } from '../utils/formatPrice';
 import resolveAvatarUrl from '../utils/avatar';
+import Icon from '../components/Icon';
+import usePageTitle from '../hooks/usePageTitle';
 
 import '../assets/UserProfile.css';
 
@@ -44,6 +46,8 @@ const Profile = () => {
   const [ordersError, setOrdersError] = useState('');
 
   const avatarSrc = useMemo(() => resolveAvatarUrl(user, '/default-avatar.png'), [user]);
+
+  usePageTitle('Hồ sơ của tôi');
 
   useEffect(() => {
     if (user) {
@@ -148,7 +152,7 @@ const Profile = () => {
         }
       };
 
-      console.log('📤 Sending update data:', updateData);
+      console.log('Sending update data:', updateData);
 
       const response = await fetch(`${API_BASE}/api/users/profile/`, {
         method: 'PUT',
@@ -159,7 +163,7 @@ const Profile = () => {
         body: JSON.stringify(updateData)
       });
 
-      console.log('📥 Response status:', response.status);
+      console.log('Response status:', response.status);
 
       const contentType = response.headers.get('content-type') || '';
       let result = {};
@@ -175,7 +179,7 @@ const Profile = () => {
           }
         }
       }
-      console.log('📥 Response data:', result);
+      console.log('Response data:', result);
 
       if (!response.ok) {
         throw new Error(result.message || result.detail || 'Cập nhật thất bại');
@@ -209,7 +213,7 @@ const Profile = () => {
       });
       setIsEditing(false);
     } catch (error) {
-      console.error('❌ Update error:', error);
+      console.error('Update error:', error);
       setMessage({ 
         type: 'error', 
         text: error.message || 'Cập nhật thất bại. Vui lòng thử lại!' 
@@ -416,7 +420,9 @@ const Profile = () => {
     if (!orders.length) {
       return (
         <div className="empty-orders">
-          <div className="empty-icon">📦</div>
+          <div className="empty-icon">
+            <Icon name="box-open" size={48} />
+          </div>
             <h3>Chưa có đơn hàng nào</h3>
             <p>Bạn chưa có đơn hàng. Hãy mua sắm ngay!</p>
             <a href="/" className="browse-products-btn">Khám phá sản phẩm</a>

@@ -6,6 +6,8 @@ import { formatPrice } from '../utils/formatPrice';
 import '../assets/productDetail.css';
 import StarRating from '../components/StarRating';
 import { getProductReviews, getReviewEligibility, submitReview } from '../utils/reviewsApi';
+import Icon from '../components/Icon';
+import usePageTitle from '../hooks/usePageTitle';
 
 export default function ProductDetail() {
     const { id } = useParams();
@@ -28,6 +30,8 @@ export default function ProductDetail() {
     const [reviewComment, setReviewComment] = useState('');
     const [reviewsLoading, setReviewsLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+
+    usePageTitle(product?.name || 'Chi tiết sản phẩm');
 
     useEffect(() => {
         fetch(`http://localhost:8000/api/products/${id}/`)
@@ -243,7 +247,11 @@ export default function ProductDetail() {
                             aria-label={wishlistEntry ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích'}
                             style={{ position: 'static' }}
                         >
-                            {wishlistEntry ? '♥' : '♡'}
+                            <Icon
+                                name="heart"
+                                variant={wishlistEntry ? 'solid' : 'regular'}
+                                size={22}
+                            />
                         </button>
                     </div>
                     <div className="product-detail-price">
@@ -322,9 +330,13 @@ export default function ProductDetail() {
                             <div className="pd-label">Số lượng</div>
                             <div>
                                 <div className="pd-qty">
-                                    <button onClick={dec}>−</button>
+                                    <button onClick={dec} aria-label="Giảm số lượng">
+                                        <Icon name="minus" size={12} />
+                                    </button>
                                     <input type="number" value={qty} readOnly />
-                                    <button onClick={inc}>+</button>
+                                    <button onClick={inc} aria-label="Tăng số lượng">
+                                        <Icon name="plus" size={12} />
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -366,8 +378,14 @@ export default function ProductDetail() {
 
                     {/* Meta info */}
                     <div className="pd-meta">
-                        <div>📦 Danh mục: {product.category?.name || 'Chưa phân loại'}</div>
-                        <div>📊 Còn lại: {product.stock || 0} sản phẩm</div>
+                        <div className="pd-meta-row">
+                            <Icon name="box-open" size={18} className="pd-meta-icon" />
+                            <span>Danh mục: {product.category?.name || 'Chưa phân loại'}</span>
+                        </div>
+                        <div className="pd-meta-row">
+                            <Icon name="chart-column" size={18} className="pd-meta-icon" />
+                            <span>Còn lại: {product.stock || 0} sản phẩm</span>
+                        </div>
                     </div>
                 </div>
             </div>

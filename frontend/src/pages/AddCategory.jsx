@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import productService from '../utils/productService';
+import usePageTitle from '../hooks/usePageTitle';
 
 const AddCategory = () => {
   const [name, setName] = useState('');
   const [message, setMessage] = useState({ type: '', text: '' });
   const [loading, setLoading] = useState(false);
+
+  usePageTitle('Thêm danh mục');
 
   const handleSubmit = async (e) => {
     e.preventDefault();

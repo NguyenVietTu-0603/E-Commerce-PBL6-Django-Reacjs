@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
 import resolveAvatarUrl from '../utils/avatar';
+import Icon from './Icon';
 
 const Navbar = () => {
   const { user, logout, isAdmin, isSeller, isBuyer, getDefaultRoute } = useAuth();
@@ -14,14 +15,20 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="navbar-container">
         <Link to={dashboardLink} className="navbar-logo">
-          🔐 Auth System
+          <Icon name="shield-halved" size={18} style={{ marginRight: 6 }} />
+          <span>Auth System</span>
         </Link>
         
         <div className="navbar-menu">
           {user ? (
             <>
               <Link to={dashboardLink} className="navbar-link">
-                {isAdmin ? '👑 Admin' : isSeller ? '🏪 Store' : '🏠 Home'}
+                <Icon
+                  name={isAdmin ? 'crown' : isSeller ? 'store' : 'house'}
+                  size={14}
+                  style={{ marginRight: 6 }}
+                />
+                <span>{isAdmin ? 'Admin' : isSeller ? 'Store' : 'Home'}</span>
               </Link>
               
               {isAdmin && (

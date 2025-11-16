@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import authService from '../utils/authService';
+import usePageTitle from '../hooks/usePageTitle';
 
 const Dashboard = () => {
   const { user, updateUser } = useAuth();
   const [loading, setLoading] = useState(false); // ⬅️ Đổi thành false
+
+  usePageTitle('Bảng điều khiển');
 
   useEffect(() => {
     let isMounted = true; // ⬅️ Thêm cleanup flag

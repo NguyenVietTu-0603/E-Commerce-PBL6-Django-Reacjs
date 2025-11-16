@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import authService from '../utils/authService';
+import usePageTitle from '../hooks/usePageTitle';
 
 const ChangePassword = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +11,8 @@ const ChangePassword = () => {
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState({ type: '', text: '' });
   const [loading, setLoading] = useState(false);
+
+  usePageTitle('Đổi mật khẩu');
 
   const handleChange = (e) => {
     setFormData({

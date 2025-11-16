@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../utils/CartContext';
-import '../assets/ProductCard.css';  // ⬅️ Thêm import này
+import { useWishlist } from '../utils/WishlistContext';
+import '../assets/ProductCard.css';  // Thêm import CSS cho thẻ sản phẩm
+import Icon from './Icon';
 
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
+  const { findWishlistItem, toggleWishlist, isBuyer } = useWishlist();
   const [isAdding, setIsAdding] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [wishlistBusy, setWishlistBusy] = useState(false);
 
   // normalize category to a string
   const categoryName =
@@ -36,10 +40,48 @@ export default function ProductCard({ product }) {
     setImageError(true);
   };
 
+  const wishlistEntry = findWishlistItem(product.id);
+
+  const handleToggleWishlist = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isBuyer) {
+      alert('Vui lòng đăng nhập bằng tài khoản người mua để sử dụng danh sách yêu thích.');
+      return;
+    }
+
+    try {
+      setWishlistBusy(true);
+      await toggleWishlist(product);
+    } catch (err) {
+      alert(err.message || 'Không thể cập nhật danh sách yêu thích.');
+    } finally {
+      setWishlistBusy(false);
+    }
+  };
+
   return (
     <article className="product-card">
       <Link to={`/product/${product.id}`} className="product-link">
         <div className="product-thumb">
+          <button
+            type="button"
+            className={`wishlist-heart ${wishlistEntry ? 'active' : ''}`}
+            onClick={handleToggleWishlist}
+            aria-label={wishlistEntry ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích'}
+            disabled={wishlistBusy}
+          >
+            {wishlistBusy ? (
+              <Icon name="spinner" size={18} className="fa-spin" />
+            ) : (
+              <Icon
+                name="heart"
+                variant={wishlistEntry ? 'solid' : 'regular'}
+                size={18}
+              />
+            )}
+          </button>
           <div className="product-image">
             <img 
               src={imageError ? defaultImage : imgSrc} 
@@ -57,17 +99,17 @@ export default function ProductCard({ product }) {
             >
               {showSuccess ? (
                 <>
-                  <span className="cart-icon">✓</span>
+                  <Icon name="circle-check" size={16} className="cart-icon" />
                   <span className="cart-text">Đã thêm</span>
                 </>
               ) : isAdding ? (
                 <>
-                  <span className="cart-icon">...</span>
+                  <Icon name="spinner" size={16} className="cart-icon fa-spin" />
                   <span className="cart-text">Đang thêm...</span>
                 </>
               ) : (
                 <>
-                  <span className="cart-icon">+</span>
+                  <Icon name="cart-plus" size={16} className="cart-icon" />
                   <span className="cart-text">Thêm vào giỏ</span>
                 </>
               )}

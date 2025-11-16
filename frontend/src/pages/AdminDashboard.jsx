@@ -1,9 +1,12 @@
 import React from 'react';
 import { useAuth } from '../utils/AuthContext';
 import { Link } from 'react-router-dom';
+import usePageTitle from '../hooks/usePageTitle';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
+
+  usePageTitle('Bảng điều khiển quản trị');
 
   return (
     <div className="container">

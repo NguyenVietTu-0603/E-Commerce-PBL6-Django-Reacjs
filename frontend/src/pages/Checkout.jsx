@@ -9,6 +9,7 @@ import {
   getWardsByDistrict,
 } from "../utils/locationsData";
 import "../assets/Checkout.css";
+import usePageTitle from "../hooks/usePageTitle";
 
 const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:8000";
 
@@ -30,6 +31,8 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { cartItems, clearCart, getCartTotal } = useCart();
   const { user } = useAuth();
+
+  usePageTitle("Thanh toán");
 
   const [formData, setFormData] = useState({
     fullName: "",

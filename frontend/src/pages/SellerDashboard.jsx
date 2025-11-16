@@ -1,9 +1,12 @@
 import React from 'react';
 import { useAuth } from '../utils/AuthContext';
 import { Link } from 'react-router-dom';
+import usePageTitle from '../hooks/usePageTitle';
 
 const SellerDashboard = () => {
   const { user } = useAuth();
+
+  usePageTitle('Bảng điều khiển người bán');
 
   return (
     <div className="container">

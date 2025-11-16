@@ -4,10 +4,14 @@ import { useCart } from '../utils/CartContext';
 import { useWishlist } from '../utils/WishlistContext';
 import { formatPrice } from '../utils/formatPrice';
 import '../assets/Cart.css';
+import Icon from '../components/Icon';
+import usePageTitle from '../hooks/usePageTitle';
 
 export default function Cart() {
   const { cartItems, updateQuantity, removeFromCart, getCartTotal, getCartCount, addToCart } = useCart();
   const { savedItems, saveForLater, removeSavedItem, updateSavedQuantity } = useWishlist();
+
+  usePageTitle('Giỏ hàng');
 
   const handleSaveForLater = async (item) => {
     try {
@@ -28,11 +32,14 @@ export default function Cart() {
       <div className="cart-page">
         <div className="cart-container">
           <div className="empty-cart">
-            <div className="empty-cart-icon">🛒</div>
+            <div className="empty-cart-icon">
+              <Icon name="cart-shopping" size={56} />
+            </div>
             <h2>Giỏ hàng trống</h2>
             <p>Bạn chưa có sản phẩm nào trong giỏ hàng</p>
             <Link to="/" className="continue-shopping-btn">
-              Tiếp tục mua sắm
+              <Icon name="arrow-left" size={16} />
+              <span>Tiếp tục mua sắm</span>
             </Link>
           </div>
         </div>
@@ -69,15 +76,17 @@ export default function Cart() {
                   <button 
                     className="qty-btn"
                     onClick={() => updateQuantity(item.id, item.quantity - 1, { color: item.color, size: item.size })}
+                    aria-label="Giảm số lượng"
                   >
-                    -
+                    <Icon name="minus" size={12} />
                   </button>
                   <span className="qty-value">{item.quantity}</span>
                   <button 
                     className="qty-btn"
                     onClick={() => updateQuantity(item.id, item.quantity + 1, { color: item.color, size: item.size })}
+                    aria-label="Tăng số lượng"
                   >
-                    +
+                    <Icon name="plus" size={12} />
                   </button>
                 </div>
 
@@ -89,7 +98,8 @@ export default function Cart() {
                   className="save-later-btn"
                   onClick={() => handleSaveForLater(item)}
                 >
-                  Lưu để mua sau
+                  <Icon name="bookmark" size={14} />
+                  <span>Lưu</span>
                 </button>
 
                 <button 
@@ -97,7 +107,7 @@ export default function Cart() {
                   onClick={() => removeFromCart(item.id, { color: item.color, size: item.size })}
                   title="Xóa sản phẩm"
                 >
-                  ×
+                  <Icon name="xmark" size={14} />
                 </button>
               </div>
             ))}
@@ -123,11 +133,13 @@ export default function Cart() {
               </div>
 
               <Link to="/checkout" className="checkout-btn">
-                Tiến hành thanh toán
+                <Icon name="credit-card" size={16} />
+                <span>Tiến hành thanh toán</span>
               </Link>
               
               <Link to="/" className="continue-shopping">
-                Tiếp tục mua sắm
+                <Icon name="arrow-left" size={14} />
+                <span>Tiếp tục mua sắm</span>
               </Link>
             </div>
           </div>
@@ -164,10 +176,12 @@ export default function Cart() {
                       await removeSavedItem(item.id);
                     }}
                   >
-                    Đưa lại vào giỏ
+                    <Icon name="cart-arrow-down" size={14} />
+                    <span>Đưa lại vào giỏ</span>
                   </button>
                   <button className="remove" onClick={() => removeSavedItem(item.id)}>
-                    Xóa
+                    <Icon name="trash" size={14} />
+                    <span>Xóa</span>
                   </button>
                 </div>
               </div>

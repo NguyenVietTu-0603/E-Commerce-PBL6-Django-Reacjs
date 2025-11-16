@@ -3,6 +3,22 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import favicon from './assets/img/favicon.png';
+
+const ensureFavicon = () => {
+  if (typeof document === 'undefined') return;
+  let link = document.querySelector("link[rel='icon']");
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = 'icon';
+    document.head.appendChild(link);
+  }
+  if (link.href !== favicon) {
+    link.href = favicon;
+  }
+};
+
+ensureFavicon();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

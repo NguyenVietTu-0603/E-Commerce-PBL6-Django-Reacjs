@@ -103,6 +103,8 @@
 
 .filters-close {
   display: none;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   border: none;
   font-size: 22px;
@@ -235,6 +237,8 @@
 
 .btn-toggle-filters {
   display: none;
+  align-items: center;
+  gap: 8px;
   padding: 12px 20px;
   background: var(--accent-gradient);
   color: #fff;
@@ -271,6 +275,9 @@
 }
 
 .pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 12px 22px;
   background: var(--surface);
   border: 1.5px solid var(--border);
