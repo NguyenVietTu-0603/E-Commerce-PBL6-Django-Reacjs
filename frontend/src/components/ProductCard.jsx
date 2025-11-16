@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../utils/CartContext';
 import { useWishlist } from '../utils/WishlistContext';
 import '../assets/ProductCard.css';  // Thêm import CSS cho thẻ sản phẩm
 import Icon from './Icon';
+import flyToCart from '../utils/flyToCart';
 
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
@@ -12,6 +13,7 @@ export default function ProductCard({ product }) {
   const [showSuccess, setShowSuccess] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [wishlistBusy, setWishlistBusy] = useState(false);
+  const imageRef = useRef(null);
 
   // normalize category to a string
   const categoryName =
@@ -28,6 +30,7 @@ export default function ProductCard({ product }) {
     
     setIsAdding(true);
     addToCart(product, 1);
+    flyToCart(imageRef.current);
     
     setShowSuccess(true);
     setTimeout(() => {
@@ -84,6 +87,7 @@ export default function ProductCard({ product }) {
           </button>
           <div className="product-image">
             <img 
+              ref={imageRef}
               src={imageError ? defaultImage : imgSrc} 
               alt={product.name || 'Product image'}
               loading="lazy"

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../utils/CartContext';
 import { useWishlist } from '../utils/WishlistContext';
@@ -8,6 +8,7 @@ import StarRating from '../components/StarRating';
 import { getProductReviews, getReviewEligibility, submitReview } from '../utils/reviewsApi';
 import Icon from '../components/Icon';
 import usePageTitle from '../hooks/usePageTitle';
+import flyToCart from '../utils/flyToCart';
 
 export default function ProductDetail() {
     const { id } = useParams();
@@ -30,6 +31,7 @@ export default function ProductDetail() {
     const [reviewComment, setReviewComment] = useState('');
     const [reviewsLoading, setReviewsLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const mainImageRef = useRef(null);
 
     usePageTitle(product?.name || 'Chi tiết sản phẩm');
 
@@ -178,7 +180,8 @@ export default function ProductDetail() {
         setQty(prev => Math.min(prev + 1, product.stock || 999));
     }
 
-    function handleAddToCart() {
+    function handleAddToCart(e) {
+        if (e?.preventDefault) e.preventDefault();
         if (colors.length > 0 && !color) {
             alert('Vui lòng chọn màu sắc');
             return;
@@ -188,6 +191,7 @@ export default function ProductDetail() {
             return;
         }
         addToCart(product, qty, { color, size });
+        flyToCart(mainImageRef.current);
         alert(`Đã thêm ${qty} sản phẩm vào giỏ hàng`);
     }
 
@@ -218,7 +222,7 @@ export default function ProductDetail() {
                 {/* Left: Media */}
                 <div className="product-detail-media">
                     <div className="pd-main-media">
-                        <img src={mainImage} alt={product.name} />
+                        <img ref={mainImageRef} src={mainImage} alt={product.name} />
                     </div>
 
                     {product.images && product.images.length > 0 && (
