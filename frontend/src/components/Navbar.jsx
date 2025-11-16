@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
+import resolveAvatarUrl from '../utils/avatar';
 
 const Navbar = () => {
   const { user, logout, isAdmin, isSeller, isBuyer, getDefaultRoute } = useAuth();
+
+  const avatarSrc = useMemo(() => resolveAvatarUrl(user), [user]);
 
   const dashboardLink = user ? getDefaultRoute(user.user_type) : '/dashboard';
 
@@ -29,6 +32,12 @@ const Navbar = () => {
               <Link to="/change-password" className="navbar-link">Password</Link>
               
               <div className="navbar-user">
+                <img
+                  src={avatarSrc}
+                  alt={user.full_name || user.username}
+                  className="navbar-user-avatar"
+                  style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', marginRight: 8 }}
+                />
                 <span className="user-badge">{user.user_type}</span>
                 <span className="user-name">{user.username}</span>
                 <button onClick={logout} className="btn-logout">Logout</button>

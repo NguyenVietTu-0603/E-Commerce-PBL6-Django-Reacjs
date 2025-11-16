@@ -42,7 +42,7 @@ export default function Home() {
           {/* Hero Section */}
           <section className="hero-section">
             <div className="hero-content">
-              <h1 className="hero-title">Chào mừng đến với PBL6 Shop</h1>
+              <h1 className="hero-title">Chào mừng đến với Sellify</h1>
               <p className="hero-subtitle">
                 Khám phá hàng ngàn sản phẩm chất lượng cao với giá tốt nhất. 
                 Mua sắm dễ dàng, giao hàng nhanh chóng.
@@ -92,7 +92,7 @@ export default function Home() {
                 <div className="section-header">
                   <h2 className="section-title">Sản phẩm nổi bật</h2>
                   <p className="section-subtitle">
-                    Những sản phẩm được yêu thích nhất tại PBL6 Shop
+                    Những sản phẩm được yêu thích nhất tại Sellify
                   </p>
                 </div>
                 <div className="products-grid">

@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
 import { useCart } from '../utils/CartContext';
 import AuthModal from './AuthModal.jsx';
 import ImageSearchUpload from './ImageSearchUpload.jsx';
+import resolveAvatarUrl from '../utils/avatar';
+import logoImg from '../assets/img/logo1.png';
 
 export default function Header({
   query = '',
@@ -12,7 +14,7 @@ export default function Header({
   onOpenRegister,
   onLogout: onLogoutProp,
   currentUser: currentUserProp,
-  onImageSearchResults, // optional callback khi có kết quả tìm ảnh
+  onImageSearchResults,
 }) {
   const navigate = useNavigate();
   const auth = useAuth();
@@ -89,11 +91,14 @@ export default function Header({
     }
   }
 
+  const avatarSrc = useMemo(() => resolveAvatarUrl(currentUser), [currentUser]);
+
   return (
     <>
       <header className="topbar">
-        <Link to="/" className="brand" aria-label="Về trang chủ">
-          <span className="brand-name">V-Market</span>
+        <Link to="/" className="" aria-label="Về trang chủ">
+          <img src={logoImg} alt="Sellify" className="brand-logo" />
+          <span className="sr-only">Về trang chủ Sellify</span>
         </Link>
 
         <form className="search-area" onSubmit={onSearch}>
@@ -140,9 +145,9 @@ export default function Header({
                 Đăng xuất
               </button>
               <img
-                src={currentUser.avatar || '/default-avatar.png'}
+                src={avatarSrc}
                 alt={currentUser.full_name || currentUser.username}
-                style={{ width: 36, height: 36, borderRadius: '50%', marginLeft: 8 }}
+                className="user-avatar-img"
               />
             </>
           ) : (
@@ -151,25 +156,10 @@ export default function Header({
               <button type="button" className="action-btn" onClick={openRegister}>Đăng ký</button>
             </>
           )}
-          <Link to="/cart" className="cart-btn" aria-label="Giỏ hàng" style={{ position: 'relative' }}>
+          <Link to="/cart" className="cart-btn" aria-label="Giỏ hàng">
             🛒
             {getCartCount() > 0 && (
-              <span className="cart-dot" style={{
-                position: 'absolute',
-                top: '6px',
-                right: '6px',
-                minWidth: '18px',
-                height: '18px',
-                background: '#666666',
-                color: 'white',
-                borderRadius: '50%',
-                fontSize: '10px',
-                fontWeight: '600',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '2px solid white'
-              }}>
+              <span className="cart-dot">
                 {getCartCount()}
               </span>
             )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -10,6 +10,7 @@ import {
   getWardName
 } from '../utils/locationsData';
 import { formatPrice } from '../utils/formatPrice';
+import resolveAvatarUrl from '../utils/avatar';
 
 import '../assets/UserProfile.css';
 
@@ -42,6 +43,8 @@ const Profile = () => {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState('');
+
+  const avatarSrc = useMemo(() => resolveAvatarUrl(user, '/default-avatar.png'), [user]);
 
   useEffect(() => {
     if (user) {
@@ -221,6 +224,20 @@ const Profile = () => {
       )}
 
       <div className="form-section">
+        <h3>Ảnh đại diện</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <img
+            src={avatarSrc}
+            alt={formData.full_name || user?.username || 'avatar'}
+            style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', border: '2px solid #eee' }}
+          />
+          <p style={{ color: '#6b7280', fontSize: 14 }}>
+            Ảnh đại diện được đồng bộ ở mọi nơi. Cập nhật avatar tại mục thông tin tài khoản trong tương lai.
+          </p>
+        </div>
+      </div>
+
+      <div className="form-section">
         <h3>Thông tin cá nhân</h3>
         <div className="form-row">
           <div className="form-group">
@@ -389,38 +406,74 @@ const Profile = () => {
     }
     return (
       <div className="orders-list">
-        {orders.map(o => (
-          <div key={o.order_id} className="order-card">
-            <div className="order-head">
-              <div>
-                <strong>Mã đơn:</strong> {o.order_id}
-              </div>
-              <span className={`order-status status-${o.status}`}>{statusMap[o.status] || o.status}</span>
-            </div>
-            <div className="order-meta">
-              <span>Ngày: {new Date(o.created_at).toLocaleString('vi-VN')}</span>
-              <span>Tổng: {formatPrice(o.total_amount)}</span>
-              <span>Thanh toán: {o.payment_method === 'cod' ? 'COD' : o.payment_method}</span>
-            </div>
-            <div className="order-items">
-              {o.items?.map((it, idx) => (
-                <div key={idx} className="order-item-row">
-                  <span className="item-name">{it.product}</span>
-                  <span className="item-qty">SL: {it.quantity}</span>
-                  <span className="item-price">{formatPrice(it.price * it.quantity)}</span>
+        {orders.map(o => {
+          const createdDate = new Date(o.created_at);
+          const itemsPreview = o.items?.slice(0, 3) || [];
+          const remainingItems = Math.max((o.items?.length || 0) - itemsPreview.length, 0);
+          const paymentLabel = o.payment_method === 'cod' ? 'Thanh toán COD' : (o.payment_method || 'Khác');
+
+          return (
+            <div key={o.order_id} className="order-card">
+              <div className="order-card-header">
+                <div className="order-code">
+                  <span>Mã đơn</span>
+                  <p>#{o.order_id}</p>
                 </div>
-              ))}
+                <span className={`order-status-pill status-${o.status}`}>
+                  {statusMap[o.status] || o.status}
+                </span>
+              </div>
+
+              <div className="order-card-meta">
+                <div className="meta-block">
+                  <p>Ngày đặt</p>
+                  <strong>
+                    {createdDate.toLocaleDateString('vi-VN')}<br />
+                    <span>{createdDate.toLocaleTimeString('vi-VN')}</span>
+                  </strong>
+                </div>
+                <div className="meta-block">
+                  <p>Thanh toán</p>
+                  <strong>{paymentLabel}</strong>
+                </div>
+                <div className="meta-block">
+                  <p>Tổng tiền</p>
+                  <strong>{formatPrice(o.total_amount)}</strong>
+                </div>
+              </div>
+
+              <div className="order-items-preview">
+                {itemsPreview.map((it, idx) => (
+                  <div key={idx} className="order-item-chip">
+                    <div>
+                      <p>{it.product}</p>
+                      <span>SL {it.quantity}</span>
+                    </div>
+                    <span>{formatPrice((it.price || 0) * (it.quantity || 0))}</span>
+                  </div>
+                ))}
+                {remainingItems > 0 && (
+                  <div className="order-items-more">
+                    +{remainingItems} sản phẩm khác
+                  </div>
+                )}
+              </div>
+
+              <div className="order-card-footer">
+                <div className="order-destination">
+                  <span>Giao đến</span>
+                  <p>{o.shipping_address || o.delivery_address || 'Đang cập nhật'}</p>
+                </div>
+                <button
+                  onClick={() => navigate(`/orders/${o.order_id}`)}
+                  className="order-detail-btn"
+                >
+                  Xem chi tiết
+                </button>
+              </div>
             </div>
-            <div className="order-actions">
-              <button
-                onClick={() => navigate(`/orders/${o.order_id}`)}
-                className="order-detail-btn"
-              >
-                Chi tiết
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
