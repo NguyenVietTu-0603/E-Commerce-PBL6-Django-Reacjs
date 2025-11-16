@@ -1,0 +1,129 @@
+/* Order success page - refactored to use project variables */
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap');
+
+:root {
+  /* Fallback variables for pages that don't import the global vars */
+  --os-bg: var(--bg, #f8f9fa);
+  --os-surface: var(--surface, #ffffff);
+  --os-muted: var(--text-muted, #6c757d);
+  --os-text: var(--text, #2c3e50);
+  --os-accent: var(--accent, #000000);
+  --os-border: var(--border, #e9ecef);
+  --os-radius: var(--radius, 12px);
+  --os-shadow: 0 6px 18px rgba(0,0,0,0.04);
+}
+
+.order-success-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+}
+
+.success-container {
+  background: white;
+  border-radius: 16px;
+  padding: 60px 40px;
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  background: #666666;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  margin: 0 auto 24px;
+  animation: scaleIn 0.5s ease;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.success-container h1 {
+  color: #1f2937;
+  font-size: 28px;
+  margin: 0 0 16px;
+}
+
+.success-message {
+  color: #6b7280;
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+.order-info {
+  background: #f3f4f6;
+  padding: 16px;
+  border-radius: 8px;
+  margin: 24px 0;
+}
+
+.order-info p {
+  margin: 0;
+  color: #374151;
+  font-size: 14px;
+}
+
+.order-info strong {
+  color: #000000;
+  font-size: 16px;
+}
+
+.success-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.btn-primary {
+  background: #000000;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #333333;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.btn-secondary {
+  background: white;
+  color: #000000;
+  border: 2px solid #000000;
+}
+
+.btn-secondary:hover {
+  background: #f3f4f6;
+  transform: translateY(-2px);
+}
+
+

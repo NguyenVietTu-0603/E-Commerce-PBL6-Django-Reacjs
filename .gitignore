@@ -1,0 +1,35 @@
+# ------------------------
+# Python / Django
+# ------------------------
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+# Django media & static
+backend/media/
+backend/staticfiles/
+
+# ------------------------
+# Node / Frontend
+# ------------------------
+node_modules/
+dist/
+build/
+frontend/build/
+*.log
+
+# ------------------------
+# Env / Config
+# ------------------------
+*.env
+
+# ------------------------
+# IDE / Editor
+# ------------------------
+.vscode/
+.idea/
+*.swp
