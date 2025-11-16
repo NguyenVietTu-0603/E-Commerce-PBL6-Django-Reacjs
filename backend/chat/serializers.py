@@ -67,5 +67,16 @@ class ConversationSerializer(serializers.ModelSerializer):
         return obj.created_at
 
     def get_unread_count(self, obj):
-        # Chưa có logic lưu trạng thái đọc, tạm thời trả 0
-        return 0
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if user and getattr(user, "is_authenticated", False):
+            if obj.buyer_id == getattr(user, "user_id", None):
+                return obj.buyer_unread
+            if obj.shop_id == getattr(user, "user_id", None):
+                return obj.shop_unread
+        viewer = self.context.get("viewer")
+        if viewer == "buyer":
+            return obj.buyer_unread
+        if viewer == "seller":
+            return obj.shop_unread
+        return obj.buyer_unread + obj.shop_unread
