@@ -33,7 +33,6 @@ const Profile = () => {
     city: '',
     district: '',
     ward: '',
-    postal_code: '',
     country: 'Vietnam',
   });
 
@@ -57,7 +56,6 @@ const Profile = () => {
         city: user.profile?.city || '',
         district: user.profile?.district || '',
         ward: user.profile?.ward || '',
-        postal_code: user.profile?.postal_code || '',
         country: user.profile?.country || 'Vietnam',
       });
     }
@@ -144,14 +142,15 @@ const Profile = () => {
           bio: formData.bio,
           address: formData.address,
           city: formData.city,
+          district: formData.district,
+          ward: formData.ward,
           country: formData.country,
-          postal_code: formData.postal_code,
         }
       };
 
       console.log('📤 Sending update data:', updateData);
 
-      const response = await fetch('http://localhost:8000/api/users/profile/update/', {
+      const response = await fetch(`${API_BASE}/api/users/profile/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -162,19 +161,51 @@ const Profile = () => {
 
       console.log('📥 Response status:', response.status);
 
-      const result = await response.json();
+      const contentType = response.headers.get('content-type') || '';
+      let result = {};
+      if (contentType.includes('application/json')) {
+        result = await response.json();
+      } else {
+        const text = await response.text();
+        if (text?.trim()) {
+          try {
+            result = JSON.parse(text);
+          } catch (err) {
+            throw new Error(text);
+          }
+        }
+      }
       console.log('📥 Response data:', result);
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Cập nhật thất bại');
+      if (!response.ok) {
+        throw new Error(result.message || result.detail || 'Cập nhật thất bại');
       }
 
-      // Cập nhật user context với thông tin mới
-      updateUser(result.user);
+      if (result.user) {
+        updateUser(result.user);
+      } else if (user) {
+        const updatedProfile =
+          typeof result === 'object' && result !== null
+            ? (result.profile && typeof result.profile === 'object'
+                ? result.profile
+                : result)
+            : {};
+
+        updateUser({
+          ...user,
+          full_name: updateData.full_name,
+          phone: updateData.phone,
+          profile: {
+            ...user.profile,
+            ...updateData.profile,
+            ...updatedProfile,
+          },
+        });
+      }
       
       setMessage({ 
         type: 'success', 
-        text: 'Cập nhật thông tin thành công!' 
+        text: result.message || 'Cập nhật thông tin thành công!' 
       });
       setIsEditing(false);
     } catch (error) {
@@ -199,7 +230,6 @@ const Profile = () => {
         city: user.profile?.city || '',
         district: user.profile?.district || '',
         ward: user.profile?.ward || '',
-        postal_code: user.profile?.postal_code || '',
         country: user.profile?.country || 'Vietnam',
       });
     }
@@ -348,17 +378,6 @@ const Profile = () => {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              <div className="form-group">
-                <label>Mã bưu điện</label>
-                <input
-                  type="text"
-                  name="postal_code"
-                  value={formData.postal_code}
-                  onChange={handleChange}
-                  placeholder="Nhập mã bưu điện"
-                />
               </div>
             </div>
 

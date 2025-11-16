@@ -94,8 +94,9 @@ class Profile(models.Model):
     bio = models.TextField(blank=True)
     address = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=100, blank=True)
+    district = models.CharField(max_length=100, blank=True)
+    ward = models.CharField(max_length=100, blank=True)
     country = models.CharField(max_length=100, blank=True)
-    postal_code = models.CharField(max_length=20, blank=True)
     
     class Meta:
         db_table = 'profiles'
