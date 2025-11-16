@@ -57,20 +57,29 @@ export default function Cart() {
 
         <div className="cart-content">
           <div className="cart-items">
-            {cartItems.map((item, index) => (
-              <div key={`${item.id}-${item.color}-${item.size}-${index}`} className="cart-item">
-                <div className="item-image">
-                  <img src={item.image || '/default-product.png'} alt={item.name} />
-                </div>
-                
-                <div className="item-details">
-                  <h3 className="item-name">{item.name}</h3>
-                  <div className="item-variants">
-                    {item.color && <span className="variant">Màu: {item.color}</span>}
-                    {item.size && <span className="variant">Size: {item.size}</span>}
+            {cartItems.map((item, index) => {
+              const availableColors = Array.isArray(item.colorOptions) ? item.colorOptions : [];
+              const availableSizes = Array.isArray(item.sizeOptions) ? item.sizeOptions : [];
+              return (
+                <div key={`${item.id}-${item.color}-${item.size}-${index}`} className="cart-item">
+                  <div className="item-image">
+                    <img src={item.image || '/default-product.png'} alt={item.name} />
                   </div>
-                  <div className="item-price">{formatPrice(item.price)}</div>
-                </div>
+                  
+                  <div className="item-details">
+                    <h3 className="item-name">{item.name}</h3>
+                    <div className="item-variants">
+                      {item.color && <span className="variant">Màu: {item.color}</span>}
+                      {!item.color && availableColors.length > 0 && (
+                        <span className="variant muted">Màu có: {availableColors.join(', ')}</span>
+                      )}
+                      {item.size && <span className="variant">Size: {item.size}</span>}
+                      {!item.size && availableSizes.length > 0 && (
+                        <span className="variant muted">Size có: {availableSizes.join(', ')}</span>
+                      )}
+                    </div>
+                    <div className="item-price">{formatPrice(item.price)}</div>
+                  </div>
 
                 <div className="item-quantity">
                   <button 
@@ -109,8 +118,9 @@ export default function Cart() {
                 >
                   <Icon name="xmark" size={14} />
                 </button>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
 
           <div className="cart-summary">
@@ -155,7 +165,13 @@ export default function Cart() {
                   <div>
                     <h3>{item.product?.name}</h3>
                     {item.color && <p>Màu: {item.color}</p>}
+                    {!item.color && Array.isArray(item.product?.color_options) && item.product.color_options.length > 0 && (
+                      <p className="variant-hint">Màu có: {item.product.color_options.join(', ')}</p>
+                    )}
                     {item.size && <p>Size: {item.size}</p>}
+                    {!item.size && Array.isArray(item.product?.size_options) && item.product.size_options.length > 0 && (
+                      <p className="variant-hint">Size có: {item.product.size_options.join(', ')}</p>
+                    )}
                     <p>{formatPrice(item.product?.price || 0)}</p>
                   </div>
                 </div>

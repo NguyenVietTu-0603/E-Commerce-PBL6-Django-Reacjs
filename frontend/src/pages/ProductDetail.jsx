@@ -9,6 +9,7 @@ import { getProductReviews, getReviewEligibility, submitReview } from '../utils/
 import Icon from '../components/Icon';
 import usePageTitle from '../hooks/usePageTitle';
 import flyToCart from '../utils/flyToCart';
+import { extractVariantOptions } from '../utils/variantUtils';
 
 export default function ProductDetail() {
     const { id } = useParams();
@@ -86,6 +87,22 @@ export default function ProductDetail() {
         return () => { cancelled = true; };
     }, [id]);
 
+    const { colors, sizes } = useMemo(() => extractVariantOptions(product || {}), [product]);
+
+    useEffect(() => {
+        if (colors.length > 0) {
+            setColor(prev => (prev && colors.includes(prev) ? prev : colors[0]));
+        } else {
+            setColor('');
+        }
+
+        if (sizes.length > 0) {
+            setSize(prev => (prev && sizes.includes(prev) ? prev : sizes[0]));
+        } else {
+            setSize('');
+        }
+    }, [colors, sizes]);
+
     async function handleSubmitReview(e) {
         e.preventDefault();
         if (!reviewRating) {
@@ -158,8 +175,6 @@ export default function ProductDetail() {
     }
 
     const vouchers = product.vouchers || [];
-    const colors = product.variants?.colors || [];
-    const sizes = product.variants?.sizes || [];
     const specs = product.specs || [];
     const description = product.description || 'Chưa có mô tả cho sản phẩm này.';
 

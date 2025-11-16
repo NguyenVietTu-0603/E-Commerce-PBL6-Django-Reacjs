@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { extractVariantOptions } from './variantUtils';
 
 const CartContext = createContext();
 
@@ -24,6 +25,7 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (product, quantity = 1, options = {}) => {
     setCartItems(prevItems => {
+      const { colors = [], sizes = [] } = extractVariantOptions(product || {});
       const existingItem = prevItems.find(
         item => item.id === product.id && 
                 item.color === options.color && 
@@ -35,7 +37,12 @@ export const CartProvider = ({ children }) => {
           item.id === product.id && 
           item.color === options.color && 
           item.size === options.size
-            ? { ...item, quantity: item.quantity + quantity }
+            ? {
+                ...item,
+                quantity: item.quantity + quantity,
+                colorOptions: item.colorOptions?.length ? item.colorOptions : colors,
+                sizeOptions: item.sizeOptions?.length ? item.sizeOptions : sizes,
+              }
             : item
         );
       }
@@ -48,7 +55,9 @@ export const CartProvider = ({ children }) => {
         quantity,
         color: options.color || '',
         size: options.size || '',
-        stock: product.stock
+        stock: product.stock,
+        colorOptions: colors,
+        sizeOptions: sizes,
       }];
     });
   };

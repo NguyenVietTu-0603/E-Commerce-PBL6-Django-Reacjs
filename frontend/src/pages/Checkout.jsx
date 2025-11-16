@@ -392,26 +392,38 @@ export default function Checkout() {
             <div className="order-summary">
               <h2>Đơn hàng của bạn</h2>
               <div className="order-items">
-                {cartItems.map((item, idx) => (
-                  <div key={idx} className="order-item">
-                    <img
-                      src={
-                        item.image ||
-                        process.env.PUBLIC_URL + "/default-product.png"
-                      }
-                      alt={item.name}
-                    />
-                    <div className="item-info">
-                      <h4>{item.name}</h4>
-                      {item.color && <span>Màu: {item.color}</span>}
-                      {item.size && <span>Size: {item.size}</span>}
-                      <div>Số lượng: {item.quantity}</div>
+                {cartItems.map((item, idx) => {
+                  const availableColors = Array.isArray(item.colorOptions) ? item.colorOptions : [];
+                  const availableSizes = Array.isArray(item.sizeOptions) ? item.sizeOptions : [];
+                  return (
+                    <div key={idx} className="order-item">
+                      <img
+                        src={
+                          item.image ||
+                          process.env.PUBLIC_URL + "/default-product.png"
+                        }
+                        alt={item.name}
+                      />
+                      <div className="item-info">
+                        <h4>{item.name}</h4>
+                        <div className="item-variants">
+                          {item.color && <span>Màu: {item.color}</span>}
+                          {!item.color && availableColors.length > 0 && (
+                            <span>Màu có: {availableColors.join(', ')}</span>
+                          )}
+                          {item.size && <span>Size: {item.size}</span>}
+                          {!item.size && availableSizes.length > 0 && (
+                            <span>Size có: {availableSizes.join(', ')}</span>
+                          )}
+                        </div>
+                        <div>Số lượng: {item.quantity}</div>
+                      </div>
+                      <div className="item-price">
+                        {formatPrice(item.price * item.quantity)}
+                      </div>
                     </div>
-                    <div className="item-price">
-                      {formatPrice(item.price * item.quantity)}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* --- Phương thức thanh toán --- */}

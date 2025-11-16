@@ -19,6 +19,7 @@ class ProductSerializer(serializers.ModelSerializer):
     seller_name = serializers.SerializerMethodField()
     rating_avg = serializers.SerializerMethodField()
     rating_count = serializers.SerializerMethodField()
+    variants = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -32,6 +33,9 @@ class ProductSerializer(serializers.ModelSerializer):
             "seller_id",
             "seller_name",
             "stock",
+             "color_options",
+             "size_options",
+             "variants",
             "created_at",
             "rating_avg",
             "rating_count",
@@ -63,13 +67,29 @@ class ProductSerializer(serializers.ModelSerializer):
         agg = Review.objects.filter(product=obj).aggregate(c=Count('id'))
         return agg['c'] or 0
 
+    def get_variants(self, obj):
+        return {
+            "colors": obj.color_options or [],
+            "sizes": obj.size_options or [],
+        }
+
 class ProductCreateSerializer(serializers.ModelSerializer):
     # dùng khi cần create/update; category nhận id
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), allow_null=True, required=False)
 
     class Meta:
         model = Product
-        fields = ["id", "name", "description", "price", "image", "category"]
+        fields = [
+            "id",
+            "name",
+            "description",
+            "price",
+            "stock",
+            "color_options",
+            "size_options",
+            "image",
+            "category",
+        ]
 
     def create(self, validated_data):
         request = self.context.get('request')
