@@ -25,6 +25,7 @@ import OrderSuccess from './pages/OrderSuccess';
 import Chat from './pages/Chat';
 import ShopChat from './pages/ShopChat';
 import SearchResults from './pages/SearchResults'; // thêm
+import ChatWidget from './components/ChatWidget';
 import './assets/Components.css';
 
 function App() {
@@ -138,6 +139,7 @@ function App() {
               {/* Default */}
               <Route path="*" element={<RoleBasedRedirect />} />
             </Routes>
+            <ChatWidget />
           </div>
         </CartProvider>
       </AuthProvider>

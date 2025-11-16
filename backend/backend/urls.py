@@ -11,6 +11,7 @@ urlpatterns = [
     path("api/auth/", include("users.urls")),
     path("api/orders/", include("orders.urls")),
     path('api/', include('reviews.urls')),
+    path('api/chat/', include('chat.urls')),
 ]
 
 if settings.DEBUG:
