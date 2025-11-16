@@ -1,11 +1,27 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../utils/CartContext';
+import { useWishlist } from '../utils/WishlistContext';
 import { formatPrice } from '../utils/formatPrice';
 import '../assets/Cart.css';
 
 export default function Cart() {
-  const { cartItems, updateQuantity, removeFromCart, getCartTotal, getCartCount } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, getCartTotal, getCartCount, addToCart } = useCart();
+  const { savedItems, saveForLater, removeSavedItem, updateSavedQuantity } = useWishlist();
+
+  const handleSaveForLater = async (item) => {
+    try {
+      await saveForLater({
+        productId: item.id,
+        quantity: item.quantity,
+        color: item.color,
+        size: item.size,
+      });
+      removeFromCart(item.id, { color: item.color, size: item.size });
+    } catch (err) {
+      alert(err.message || 'Không thể lưu sản phẩm, vui lòng thử lại.');
+    }
+  };
 
   if (cartItems.length === 0) {
     return (
@@ -69,6 +85,13 @@ export default function Cart() {
                   {formatPrice(item.price * item.quantity)}
                 </div>
 
+                <button
+                  className="save-later-btn"
+                  onClick={() => handleSaveForLater(item)}
+                >
+                  Lưu để mua sau
+                </button>
+
                 <button 
                   className="remove-btn"
                   onClick={() => removeFromCart(item.id, { color: item.color, size: item.size })}
@@ -109,6 +132,48 @@ export default function Cart() {
             </div>
           </div>
         </div>
+
+        {savedItems.length > 0 && (
+          <div className="saved-items-panel">
+            <h2>Sản phẩm lưu để mua sau</h2>
+            {savedItems.map((item) => (
+              <div key={item.id} className="saved-item">
+                <div className="saved-main">
+                  <img src={item.product?.image || '/default-product.png'} alt={item.product?.name} />
+                  <div>
+                    <h3>{item.product?.name}</h3>
+                    {item.color && <p>Màu: {item.color}</p>}
+                    {item.size && <p>Size: {item.size}</p>}
+                    <p>{formatPrice(item.product?.price || 0)}</p>
+                  </div>
+                </div>
+                <div className="saved-actions">
+                  <label>
+                    Số lượng:
+                    <input
+                      type="number"
+                      min="1"
+                      value={item.quantity || 1}
+                      onChange={(e) => updateSavedQuantity(item.id, Number(e.target.value) || 1)}
+                    />
+                  </label>
+                  <button
+                    className="restore-btn"
+                    onClick={async () => {
+                      addToCart(item.product, item.quantity || 1, { color: item.color, size: item.size });
+                      await removeSavedItem(item.id);
+                    }}
+                  >
+                    Đưa lại vào giỏ
+                  </button>
+                  <button className="remove" onClick={() => removeSavedItem(item.id)}>
+                    Xóa
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

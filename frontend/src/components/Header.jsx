@@ -5,6 +5,7 @@ import { useCart } from '../utils/CartContext';
 import AuthModal from './AuthModal.jsx';
 import ImageSearchUpload from './ImageSearchUpload.jsx';
 import resolveAvatarUrl from '../utils/avatar';
+import { useWishlist } from '../utils/WishlistContext';
 import logoImg from '../assets/img/logo1.png';
 
 export default function Header({
@@ -19,6 +20,7 @@ export default function Header({
   const navigate = useNavigate();
   const auth = useAuth();
   const { getCartCount } = useCart();
+  const { wishlist, isBuyer } = useWishlist();
   const currentUser = currentUserProp ?? auth?.user;
   const logoutFn = onLogoutProp ?? auth?.logout ?? (() => { });
   const [localQuery, setLocalQuery] = useState(query || '');
@@ -137,6 +139,14 @@ export default function Header({
                 <Link to="/seller/dashboard" className="navbar-link">Trang bán hàng</Link>
               )}
               <Link to="/profile" className="navbar-link">Trang cá nhân</Link>
+              {currentUser.user_type === 'buyer' && (
+                <Link to="/wishlist" className="wishlist-link-btn" aria-label="Danh sách yêu thích">
+                  ♡
+                  {isBuyer && wishlist.length > 0 && (
+                    <span className="cart-dot">{wishlist.length}</span>
+                  )}
+                </Link>
+              )}
               <button
                 type="button"
                 className="logout-btn"

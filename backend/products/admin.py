@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product, Category
+from .models import Product, Category, WishlistItem, SavedItem
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -14,3 +14,17 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     list_filter = ('is_active',)
     prepopulated_fields = {'slug': ('name',)}
+
+
+@admin.register(WishlistItem)
+class WishlistItemAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'product', 'color', 'size', 'created_at')
+    search_fields = ('user__username', 'product__name')
+    list_filter = ('created_at',)
+
+
+@admin.register(SavedItem)
+class SavedItemAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'product', 'quantity', 'color', 'size', 'moved_from_cart_at')
+    search_fields = ('user__username', 'product__name')
+    list_filter = ('moved_from_cart_at',)

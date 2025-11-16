@@ -77,7 +77,7 @@ const Profile = () => {
       setDistricts([]);
       setWards([]);
     }
-  }, [formData.city]);
+  }, [formData.city, formData.district]);
 
   useEffect(() => {
     if (formData.district) {
@@ -91,7 +91,7 @@ const Profile = () => {
     } else {
       setWards([]);
     }
-  }, [formData.district]);
+  }, [formData.district, formData.ward]);
 
   useEffect(() => {
     if (activeTab === 'orders') {
@@ -497,16 +497,6 @@ const Profile = () => {
     );
   };
 
-  const renderWishlistTab = () => (
-    <div className="empty-wishlist">
-      <div className="empty-icon">❤️</div>
-      <h3>Danh sách yêu thích trống</h3>
-      <p>Bạn chưa thêm sản phẩm nào vào danh sách yêu thích.</p>
-      <a href="/" className="browse-products-btn">
-        Khám phá sản phẩm
-      </a>
-    </div>
-  );
 
   return (
     <div className="user-profile-page">
@@ -543,12 +533,6 @@ const Profile = () => {
               Đơn hàng của tôi
             </button>
             <button
-              className={`nav-item ${activeTab === 'wishlist' ? 'active' : ''}`}
-              onClick={() => setActiveTab('wishlist')}
-            >
-              Danh sách yêu thích
-            </button>
-            <button
               className="nav-item"
               onClick={() => navigate('/change-password')}
             >
@@ -562,7 +546,6 @@ const Profile = () => {
             <h2>
               {activeTab === 'profile' && 'Thông tin cá nhân'}
               {activeTab === 'orders' && 'Đơn hàng của tôi'}
-              {activeTab === 'wishlist' && 'Danh sách yêu thích'}
             </h2>
             
             {activeTab === 'profile' && (
@@ -598,7 +581,6 @@ const Profile = () => {
 
           {activeTab === 'profile' && renderProfileTab()}
           {activeTab === 'orders' && renderOrdersTab()}
-          {activeTab === 'wishlist' && renderWishlistTab()}
         </main>
       </div>
     </div>

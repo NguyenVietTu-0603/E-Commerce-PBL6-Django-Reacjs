@@ -400,6 +400,92 @@
   box-shadow: var(--shadow-xl);
 }
 
+.save-later-btn {
+  margin-top: 8px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: var(--transition-base);
+}
+
+.save-later-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.saved-items-panel {
+  margin-top: 32px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  padding: 24px;
+}
+
+.saved-items-panel h2 {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.saved-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.saved-item:last-child {
+  border-bottom: none;
+}
+
+.saved-main {
+  display: flex;
+  gap: 16px;
+}
+
+.saved-main img {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.saved-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.saved-actions input {
+  width: 64px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.saved-actions button {
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.saved-actions .restore-btn {
+  background: var(--accent-gradient);
+  color: #fff;
+}
+
+.saved-actions .remove {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
 .continue-shopping {
   display: block;
   text-align: center;

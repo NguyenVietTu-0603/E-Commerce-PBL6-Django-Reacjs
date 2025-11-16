@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../utils/CartContext';
+import { useWishlist } from '../utils/WishlistContext';
 import { formatPrice } from '../utils/formatPrice';
 import '../assets/productDetail.css';
 import StarRating from '../components/StarRating';
@@ -10,6 +11,7 @@ export default function ProductDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { addToCart } = useCart();
+    const { findWishlistItem, toggleWishlist, isBuyer } = useWishlist();
 
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -109,6 +111,24 @@ export default function ProductDetail() {
             setSubmitting(false);
         }
     }
+
+    const wishlistEntry = useMemo(() => {
+        if (!product) return null;
+        return findWishlistItem(product.id, color, size);
+    }, [product, color, size, findWishlistItem]);
+
+    const handleToggleWishlist = async () => {
+        if (!product) return;
+        if (!isBuyer) {
+            alert('Vui lòng đăng nhập bằng tài khoản người mua để sử dụng danh sách yêu thích.');
+            return;
+        }
+        try {
+            await toggleWishlist(product, { color, size });
+        } catch (err) {
+            alert(err.message || 'Không thể cập nhật danh sách yêu thích');
+        }
+    };
 
     if (loading) {
         return (
@@ -214,7 +234,18 @@ export default function ProductDetail() {
 
                 {/* Right: Info */}
                 <div className="product-detail-info">
-                    <h1>{product.name}</h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <h1 style={{ flex: '1 1 auto', margin: 0 }}>{product.name}</h1>
+                        <button
+                            type="button"
+                            className={`wishlist-heart ${wishlistEntry ? 'active' : ''}`}
+                            onClick={handleToggleWishlist}
+                            aria-label={wishlistEntry ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích'}
+                            style={{ position: 'static' }}
+                        >
+                            {wishlistEntry ? '♥' : '♡'}
+                        </button>
+                    </div>
                     <div className="product-detail-price">
                         {formatPrice(product.price)}
                     </div>
