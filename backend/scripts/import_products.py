@@ -11,7 +11,7 @@ def run():
     base_dir = Path(__file__).resolve().parent
     products_csv = base_dir / 'styles.csv'
     images_csv = base_dir / 'images.csv'
-    image_dir = Path(r"C:\Users\HOan\Downloads\fashion-dataset\images")  # thư mục ảnh local
+    image_dir = Path(r"C:\Users\HOan\Downloads\fashion-dataset\images")
 
     if not products_csv.exists():
         print(f"❌ Không tìm thấy file: {products_csv}")
@@ -54,7 +54,7 @@ def run():
     if not image_dir.exists():
         print(f"⚠️ Thư mục ảnh local chưa tồn tại: {image_dir}")
 
-    # Lấy seller random
+    # Seller random
     seller_usernames = ['seller1', 'seller2', 'seller3']
     sellers = list(User.objects.filter(username__in=seller_usernames))
     if not sellers:
@@ -71,10 +71,8 @@ def run():
     have_remote = 0
 
     processed = 0
-    total_rows = 0
     MAX_ROWS = 2000
 
-    # Mẫu màu & size
     COLORS = [
         'Red', 'Blue', 'Green', 'Black', 'White', 'Yellow', 
         'Pink', 'Gray', 'Purple', 'Orange', 'Brown', 'Beige', 
@@ -86,11 +84,10 @@ def run():
 
     with products_csv.open(newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
-        for row in reader:
-            if processed >= MAX_ROWS:
-                break
-            total_rows += 1
+        all_rows = list(reader)
+        sample_rows = random.sample(all_rows, k=min(MAX_ROWS, len(all_rows)))  # random 2000 dòng
 
+        for row in sample_rows:
             name = row.get('productDisplayName') or row.get('name') or 'Unknown Product'
             desc_parts = []
             for key in ['gender', 'usage', 'articleType', 'baseColour', 'season', 'year']:
@@ -99,7 +96,6 @@ def run():
                     desc_parts.append(val)
             description = ' - '.join(desc_parts) if desc_parts else 'No description'
 
-            # Category
             category_name = row.get('subCategory') or row.get('masterCategory') or 'Uncategorized'
             if category_name not in category_cache:
                 category_obj, created = Category.objects.get_or_create(
@@ -115,7 +111,6 @@ def run():
             row_id = row.get('id') or row.get('productId') or row.get('styleid') or row.get('product_id')
             local_path = find_local_image(str(row_id) if row_id else None)
 
-            # URL fallback
             image_url = ""
             if not local_path:
                 filename = row.get('filename') or row.get('file_name')
@@ -127,18 +122,20 @@ def run():
                     if not image_url and '.' in fn_norm:
                         image_url = image_map.get(fn_norm.rsplit('.', 1)[0], "")
 
-            price = random.randint(200_000, 1_500_000)
+            # Random giá từ 100k → 5 triệu, làm tròn 1000
+            price = random.randint(100_000, 5_000_000)
+            price = (price // 1000) * 1000
+
             stock = random.randint(1, 50)
             rating = round(random.uniform(1.0, 5.0), 1)
             sold_count = random.randint(0, 500)
             seller = random.choice(sellers)
 
-            # Random variants
             variant_colors = random.sample(COLORS, k=random.randint(1, min(len(COLORS), 6)))
             variant_sizes = random.sample(SIZES, k=random.randint(1, min(len(SIZES), 5)))
             variants_str = f"Colors: {', '.join(variant_colors)} | Sizes: {', '.join(variant_sizes)}"
 
-            desc_with_stats = f"{description}\nRating: {rating}⭐ | Đã bán: {sold_count}\n{variants_str}"
+            desc_with_stats = f"{description}\nRating: {rating}⭐ | Sold: {sold_count}\n{variants_str}"
 
             product_data = {
                 'seller': seller,
@@ -152,12 +149,8 @@ def run():
                 'size_options': variant_sizes,
             }
 
-            # Local image
             if local_path:
-                product = Product(
-                    **product_data,
-                    image_url="",
-                )
+                product = Product(**product_data, image_url="")
                 product.save()
                 with local_path.open('rb') as f:
                     product.image.save(local_path.name, File(f), save=True)
@@ -166,31 +159,26 @@ def run():
             else:
                 if not image_url:
                     missing_any_image += 1
-                product = Product(
-                    **product_data,
-                    image='',
-                    image_url=image_url,
-                )
+                product = Product(**product_data, image='', image_url=image_url)
                 remote_products.append(product)
                 have_remote += 1
                 processed += 1
 
             if processed % 100 == 0:
-                print(f"  📦 Đã xử lý {processed}/{MAX_ROWS} dòng...")
+                print(f"  📦 Đã xử lý {processed}/{MAX_ROWS} sản phẩm...")
 
-    # Bulk create
     if remote_products:
         try:
             print(f"\n💾 Đang lưu {len(remote_products)} sản phẩm dùng URL ảnh...")
             Product.objects.bulk_create(remote_products, batch_size=500)
         except Exception as e:
-            print(f"❌ Lỗi khi bulk_create: {e}")
+            print(f"❌ Lỗi bulk_create: {e}")
             import traceback
             traceback.print_exc()
 
     print("✅ Import hoàn tất!")
-    print(f"   📊 Tổng xử lý: {processed}/{MAX_ROWS} (đọc {total_rows} dòng)")
-    print(f"   🖼️  Ảnh local: {have_local}")
-    print(f"   🌐  Ảnh URL: {have_remote - missing_any_image}")
-    print(f"   ❌ Thiếu ảnh: {missing_any_image}")
-    print(f"   📂 Categories: {len(category_cache)}")
+    print(f"📊 Tổng xử lý: {processed}/{MAX_ROWS}")
+    print(f"🖼️  Ảnh local: {have_local}")
+    print(f"🌐  Ảnh URL: {have_remote - missing_any_image}")
+    print(f"❌ Thiếu ảnh: {missing_any_image}")
+    print(f"📂 Categories: {len(category_cache)}")
