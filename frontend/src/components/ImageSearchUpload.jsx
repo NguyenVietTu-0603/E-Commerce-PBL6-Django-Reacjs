@@ -1,14 +1,16 @@
 import React, { useRef } from 'react';
+import Icon from './Icon';
 
 export default function ImageSearchUpload({
   endpoint = 'http://localhost:8000/api/search/image/',
   k = 48,
-  label = '🔎 Tìm bằng ảnh',
+  label = 'Tìm bằng ảnh',
   onStart,
   onFinish,
   onResults,
   onError,
   className = 'btn btn-primary',
+  icon = 'image'
 }) {
   const inputRef = useRef(null);
 
@@ -39,9 +41,21 @@ export default function ImageSearchUpload({
     }
   }
 
+  const content = typeof label === 'string'
+    ? (
+        <>
+          {icon && <Icon name={icon} size={16} style={{ marginRight: 6 }} />}
+          <span>{label}</span>
+        </>
+      )
+    : label;
+
   return (
-    <label className={className} style={{ cursor: 'pointer' }}>
-      {label}
+    <label
+      className={className}
+      style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+    >
+      {content}
       <input
         ref={inputRef}
         type="file"

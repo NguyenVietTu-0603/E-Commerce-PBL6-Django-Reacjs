@@ -398,6 +398,39 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         # Tạo profile nếu chưa có
         profile, created = Profile.objects.get_or_create(user=self.request.user)
         return profile
+
+    def update(self, request, *args, **kwargs):
+        profile_instance = self.get_object()
+        user_instance = request.user
+
+        payload = {}
+        if 'full_name' in request.data:
+            payload['full_name'] = request.data.get('full_name')
+        if 'phone' in request.data:
+            payload['phone'] = request.data.get('phone')
+
+        profile_data = request.data.get('profile', {})
+        if isinstance(profile_data, dict) and profile_data:
+            payload['profile'] = profile_data
+
+        serializer = UpdateUserSerializer(
+            user_instance,
+            data=payload,
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        profile_instance.refresh_from_db()
+
+        return Response(
+            {
+                'message': 'Cập nhật hồ sơ thành công',
+                'user': UserSerializer(user_instance).data,
+                'profile': ProfileSerializer(profile_instance, context={'request': request}).data,
+            },
+            status=status.HTTP_200_OK,
+        )
     
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)

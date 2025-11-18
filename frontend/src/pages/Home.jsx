@@ -3,11 +3,15 @@ import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import Loading from '../components/Loading';
 import '../assets/Home.css';
+import Icon from '../components/Icon';
+import usePageTitle from '../hooks/usePageTitle';
 
 export default function Home() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  usePageTitle('Trang chủ');
 
   useEffect(() => {
     // Fetch products
@@ -42,7 +46,7 @@ export default function Home() {
           {/* Hero Section */}
           <section className="hero-section">
             <div className="hero-content">
-              <h1 className="hero-title">Chào mừng đến với PBL6 Shop</h1>
+              <h1 className="hero-title">Chào mừng đến với Sellify</h1>
               <p className="hero-subtitle">
                 Khám phá hàng ngàn sản phẩm chất lượng cao với giá tốt nhất. 
                 Mua sắm dễ dàng, giao hàng nhanh chóng.
@@ -74,7 +78,9 @@ export default function Home() {
                     to={`/category/${category.id}`}
                     className="category-card"
                   >
-                    <span className="category-icon">📦</span>
+                    <span className="category-icon">
+                      <Icon name="box-open" size={20} />
+                    </span>
                     <h3 className="category-name">{category.name}</h3>
                     <p className="category-count">
                       {category.product_count || 0} sản phẩm
@@ -92,7 +98,7 @@ export default function Home() {
                 <div className="section-header">
                   <h2 className="section-title">Sản phẩm nổi bật</h2>
                   <p className="section-subtitle">
-                    Những sản phẩm được yêu thích nhất tại PBL6 Shop
+                    Những sản phẩm được yêu thích nhất tại Sellify
                   </p>
                 </div>
                 <div className="products-grid">
@@ -114,21 +120,27 @@ export default function Home() {
             </div>
             <div className="features-grid">
               <div className="feature-card">
-                <span className="feature-icon">🚚</span>
+                <span className="feature-icon">
+                  <Icon name="truck-fast" size={22} />
+                </span>
                 <h3 className="feature-title">Giao hàng nhanh</h3>
                 <p className="feature-description">
                   Giao hàng toàn quốc, nhận hàng trong 2-3 ngày với dịch vụ vận chuyển uy tín
                 </p>
               </div>
               <div className="feature-card">
-                <span className="feature-icon">💯</span>
+                <span className="feature-icon">
+                  <Icon name="medal" size={22} />
+                </span>
                 <h3 className="feature-title">Chất lượng đảm bảo</h3>
                 <p className="feature-description">
                   100% sản phẩm chính hãng, được kiểm tra kỹ càng trước khi giao
                 </p>
               </div>
               <div className="feature-card">
-                <span className="feature-icon">🔒</span>
+                <span className="feature-icon">
+                  <Icon name="lock" size={22} />
+                </span>
                 <h3 className="feature-title">Thanh toán an toàn</h3>
                 <p className="feature-description">
                   Hỗ trợ nhiều hình thức thanh toán, bảo mật thông tin tuyệt đối

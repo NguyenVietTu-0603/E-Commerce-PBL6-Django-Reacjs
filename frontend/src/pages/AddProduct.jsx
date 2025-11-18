@@ -2,10 +2,13 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import usePageTitle from '../hooks/usePageTitle';
 
 const AddProduct = () => {
   const { user, getDefaultRoute } = useAuth();
   const navigate = useNavigate();
+
+  usePageTitle('Thêm sản phẩm');
 
   const [form, setForm] = useState({
     name: '',

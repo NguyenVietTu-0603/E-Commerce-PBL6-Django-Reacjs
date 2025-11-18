@@ -6,6 +6,8 @@ class Conversation(models.Model):
     shop = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='shop_conversations', on_delete=models.CASCADE)
     product = models.ForeignKey('products.Product', null=True, blank=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True)
+    buyer_unread = models.PositiveIntegerField(default=0)
+    shop_unread = models.PositiveIntegerField(default=0)
 
     class Meta:
         unique_together = ('buyer', 'shop', 'product')

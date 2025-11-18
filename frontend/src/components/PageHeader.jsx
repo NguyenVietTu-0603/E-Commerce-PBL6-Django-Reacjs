@@ -1,3 +1,5 @@
+import Icon from './Icon';
+
 export default function PageHeader({ 
   title, 
   subtitle, 
@@ -16,7 +18,11 @@ export default function PageHeader({
               ) : (
                 <span>{item.text}</span>
               )}
-              {index < breadcrumb.length - 1 && <span>›</span>}
+              {index < breadcrumb.length - 1 && (
+                <span className="breadcrumb-icon">
+                  <Icon name="angle-right" size={12} />
+                </span>
+              )}
             </div>
           ))}
         </nav>

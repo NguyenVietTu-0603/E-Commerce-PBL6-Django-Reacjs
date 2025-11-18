@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
+import usePageTitle from '../hooks/usePageTitle';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:8000';
 
@@ -12,6 +13,8 @@ export default function ShopChat() {
   const [text, setText] = useState('');
   const wsRef = useRef(null);
   const bottomRef = useRef(null);
+
+  usePageTitle(buyerId ? `Shop chat với khách #${buyerId}` : 'Chat của shop');
 
   useEffect(() => {
     if (!user) {

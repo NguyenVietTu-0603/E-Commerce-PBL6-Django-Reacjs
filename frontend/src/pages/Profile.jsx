@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -10,6 +10,9 @@ import {
   getWardName
 } from '../utils/locationsData';
 import { formatPrice } from '../utils/formatPrice';
+import resolveAvatarUrl from '../utils/avatar';
+import Icon from '../components/Icon';
+import usePageTitle from '../hooks/usePageTitle';
 
 import '../assets/UserProfile.css';
 
@@ -32,7 +35,6 @@ const Profile = () => {
     city: '',
     district: '',
     ward: '',
-    postal_code: '',
     country: 'Vietnam',
   });
 
@@ -42,6 +44,10 @@ const Profile = () => {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState('');
+
+  const avatarSrc = useMemo(() => resolveAvatarUrl(user, '/default-avatar.png'), [user]);
+
+  usePageTitle('Hồ sơ của tôi');
 
   useEffect(() => {
     if (user) {
@@ -54,7 +60,6 @@ const Profile = () => {
         city: user.profile?.city || '',
         district: user.profile?.district || '',
         ward: user.profile?.ward || '',
-        postal_code: user.profile?.postal_code || '',
         country: user.profile?.country || 'Vietnam',
       });
     }
@@ -76,7 +81,7 @@ const Profile = () => {
       setDistricts([]);
       setWards([]);
     }
-  }, [formData.city]);
+  }, [formData.city, formData.district]);
 
   useEffect(() => {
     if (formData.district) {
@@ -90,7 +95,7 @@ const Profile = () => {
     } else {
       setWards([]);
     }
-  }, [formData.district]);
+  }, [formData.district, formData.ward]);
 
   useEffect(() => {
     if (activeTab === 'orders') {
@@ -141,14 +146,15 @@ const Profile = () => {
           bio: formData.bio,
           address: formData.address,
           city: formData.city,
+          district: formData.district,
+          ward: formData.ward,
           country: formData.country,
-          postal_code: formData.postal_code,
         }
       };
 
-      console.log('📤 Sending update data:', updateData);
+      console.log('Sending update data:', updateData);
 
-      const response = await fetch('http://localhost:8000/api/users/profile/update/', {
+      const response = await fetch(`${API_BASE}/api/users/profile/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -157,25 +163,57 @@ const Profile = () => {
         body: JSON.stringify(updateData)
       });
 
-      console.log('📥 Response status:', response.status);
+      console.log('Response status:', response.status);
 
-      const result = await response.json();
-      console.log('📥 Response data:', result);
+      const contentType = response.headers.get('content-type') || '';
+      let result = {};
+      if (contentType.includes('application/json')) {
+        result = await response.json();
+      } else {
+        const text = await response.text();
+        if (text?.trim()) {
+          try {
+            result = JSON.parse(text);
+          } catch (err) {
+            throw new Error(text);
+          }
+        }
+      }
+      console.log('Response data:', result);
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Cập nhật thất bại');
+      if (!response.ok) {
+        throw new Error(result.message || result.detail || 'Cập nhật thất bại');
       }
 
-      // Cập nhật user context với thông tin mới
-      updateUser(result.user);
+      if (result.user) {
+        updateUser(result.user);
+      } else if (user) {
+        const updatedProfile =
+          typeof result === 'object' && result !== null
+            ? (result.profile && typeof result.profile === 'object'
+                ? result.profile
+                : result)
+            : {};
+
+        updateUser({
+          ...user,
+          full_name: updateData.full_name,
+          phone: updateData.phone,
+          profile: {
+            ...user.profile,
+            ...updateData.profile,
+            ...updatedProfile,
+          },
+        });
+      }
       
       setMessage({ 
         type: 'success', 
-        text: 'Cập nhật thông tin thành công!' 
+        text: result.message || 'Cập nhật thông tin thành công!' 
       });
       setIsEditing(false);
     } catch (error) {
-      console.error('❌ Update error:', error);
+      console.error('Update error:', error);
       setMessage({ 
         type: 'error', 
         text: error.message || 'Cập nhật thất bại. Vui lòng thử lại!' 
@@ -196,7 +234,6 @@ const Profile = () => {
         city: user.profile?.city || '',
         district: user.profile?.district || '',
         ward: user.profile?.ward || '',
-        postal_code: user.profile?.postal_code || '',
         country: user.profile?.country || 'Vietnam',
       });
     }
@@ -219,6 +256,20 @@ const Profile = () => {
           {message.text}
         </div>
       )}
+
+      <div className="form-section">
+        <h3>Ảnh đại diện</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <img
+            src={avatarSrc}
+            alt={formData.full_name || user?.username || 'avatar'}
+            style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', border: '2px solid #eee' }}
+          />
+          <p style={{ color: '#6b7280', fontSize: 14 }}>
+            Ảnh đại diện được đồng bộ ở mọi nơi. Cập nhật avatar tại mục thông tin tài khoản trong tương lai.
+          </p>
+        </div>
+      </div>
 
       <div className="form-section">
         <h3>Thông tin cá nhân</h3>
@@ -332,17 +383,6 @@ const Profile = () => {
                   ))}
                 </select>
               </div>
-
-              <div className="form-group">
-                <label>Mã bưu điện</label>
-                <input
-                  type="text"
-                  name="postal_code"
-                  value={formData.postal_code}
-                  onChange={handleChange}
-                  placeholder="Nhập mã bưu điện"
-                />
-              </div>
             </div>
 
             <div className="form-group">
@@ -380,7 +420,9 @@ const Profile = () => {
     if (!orders.length) {
       return (
         <div className="empty-orders">
-          <div className="empty-icon">📦</div>
+          <div className="empty-icon">
+            <Icon name="box-open" size={48} />
+          </div>
             <h3>Chưa có đơn hàng nào</h3>
             <p>Bạn chưa có đơn hàng. Hãy mua sắm ngay!</p>
             <a href="/" className="browse-products-btn">Khám phá sản phẩm</a>
@@ -389,52 +431,78 @@ const Profile = () => {
     }
     return (
       <div className="orders-list">
-        {orders.map(o => (
-          <div key={o.order_id} className="order-card">
-            <div className="order-head">
-              <div>
-                <strong>Mã đơn:</strong> {o.order_id}
-              </div>
-              <span className={`order-status status-${o.status}`}>{statusMap[o.status] || o.status}</span>
-            </div>
-            <div className="order-meta">
-              <span>Ngày: {new Date(o.created_at).toLocaleString('vi-VN')}</span>
-              <span>Tổng: {formatPrice(o.total_amount)}</span>
-              <span>Thanh toán: {o.payment_method === 'cod' ? 'COD' : o.payment_method}</span>
-            </div>
-            <div className="order-items">
-              {o.items?.map((it, idx) => (
-                <div key={idx} className="order-item-row">
-                  <span className="item-name">{it.product}</span>
-                  <span className="item-qty">SL: {it.quantity}</span>
-                  <span className="item-price">{formatPrice(it.price * it.quantity)}</span>
+        {orders.map(o => {
+          const createdDate = new Date(o.created_at);
+          const itemsPreview = o.items?.slice(0, 3) || [];
+          const remainingItems = Math.max((o.items?.length || 0) - itemsPreview.length, 0);
+          const paymentLabel = o.payment_method === 'cod' ? 'Thanh toán COD' : (o.payment_method || 'Khác');
+
+          return (
+            <div key={o.order_id} className="order-card">
+              <div className="order-card-header">
+                <div className="order-code">
+                  <span>Mã đơn</span>
+                  <p>#{o.order_id}</p>
                 </div>
-              ))}
+                <span className={`order-status-pill status-${o.status}`}>
+                  {statusMap[o.status] || o.status}
+                </span>
+              </div>
+
+              <div className="order-card-meta">
+                <div className="meta-block">
+                  <p>Ngày đặt</p>
+                  <strong>
+                    {createdDate.toLocaleDateString('vi-VN')}<br />
+                    <span>{createdDate.toLocaleTimeString('vi-VN')}</span>
+                  </strong>
+                </div>
+                <div className="meta-block">
+                  <p>Thanh toán</p>
+                  <strong>{paymentLabel}</strong>
+                </div>
+                <div className="meta-block">
+                  <p>Tổng tiền</p>
+                  <strong>{formatPrice(o.total_amount)}</strong>
+                </div>
+              </div>
+
+              <div className="order-items-preview">
+                {itemsPreview.map((it, idx) => (
+                  <div key={idx} className="order-item-chip">
+                    <div>
+                      <p>{it.product}</p>
+                      <span>SL {it.quantity}</span>
+                    </div>
+                    <span>{formatPrice((it.price || 0) * (it.quantity || 0))}</span>
+                  </div>
+                ))}
+                {remainingItems > 0 && (
+                  <div className="order-items-more">
+                    +{remainingItems} sản phẩm khác
+                  </div>
+                )}
+              </div>
+
+              <div className="order-card-footer">
+                <div className="order-destination">
+                  <span>Giao đến</span>
+                  <p>{o.shipping_address || o.delivery_address || 'Đang cập nhật'}</p>
+                </div>
+                <button
+                  onClick={() => navigate(`/orders/${o.order_id}`)}
+                  className="order-detail-btn"
+                >
+                  Xem chi tiết
+                </button>
+              </div>
             </div>
-            <div className="order-actions">
-              <button
-                onClick={() => navigate(`/orders/${o.order_id}`)}
-                className="order-detail-btn"
-              >
-                Chi tiết
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
 
-  const renderWishlistTab = () => (
-    <div className="empty-wishlist">
-      <div className="empty-icon">❤️</div>
-      <h3>Danh sách yêu thích trống</h3>
-      <p>Bạn chưa thêm sản phẩm nào vào danh sách yêu thích.</p>
-      <a href="/" className="browse-products-btn">
-        Khám phá sản phẩm
-      </a>
-    </div>
-  );
 
   return (
     <div className="user-profile-page">
@@ -471,12 +539,6 @@ const Profile = () => {
               Đơn hàng của tôi
             </button>
             <button
-              className={`nav-item ${activeTab === 'wishlist' ? 'active' : ''}`}
-              onClick={() => setActiveTab('wishlist')}
-            >
-              Danh sách yêu thích
-            </button>
-            <button
               className="nav-item"
               onClick={() => navigate('/change-password')}
             >
@@ -490,7 +552,6 @@ const Profile = () => {
             <h2>
               {activeTab === 'profile' && 'Thông tin cá nhân'}
               {activeTab === 'orders' && 'Đơn hàng của tôi'}
-              {activeTab === 'wishlist' && 'Danh sách yêu thích'}
             </h2>
             
             {activeTab === 'profile' && (
@@ -526,7 +587,6 @@ const Profile = () => {
 
           {activeTab === 'profile' && renderProfileTab()}
           {activeTab === 'orders' && renderOrdersTab()}
-          {activeTab === 'wishlist' && renderWishlistTab()}
         </main>
       </div>
     </div>

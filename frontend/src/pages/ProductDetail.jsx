@@ -1,15 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../utils/CartContext';
+import { useWishlist } from '../utils/WishlistContext';
 import { formatPrice } from '../utils/formatPrice';
 import '../assets/productDetail.css';
 import StarRating from '../components/StarRating';
 import { getProductReviews, getReviewEligibility, submitReview } from '../utils/reviewsApi';
+import Icon from '../components/Icon';
+import usePageTitle from '../hooks/usePageTitle';
+import flyToCart from '../utils/flyToCart';
+import { extractVariantOptions } from '../utils/variantUtils';
 
 export default function ProductDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { addToCart } = useCart();
+    const { findWishlistItem, toggleWishlist, isBuyer } = useWishlist();
 
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -26,6 +32,9 @@ export default function ProductDetail() {
     const [reviewComment, setReviewComment] = useState('');
     const [reviewsLoading, setReviewsLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const mainImageRef = useRef(null);
+
+    usePageTitle(product?.name || 'Chi tiết sản phẩm');
 
     useEffect(() => {
         fetch(`http://localhost:8000/api/products/${id}/`)
@@ -78,6 +87,22 @@ export default function ProductDetail() {
         return () => { cancelled = true; };
     }, [id]);
 
+    const { colors, sizes } = useMemo(() => extractVariantOptions(product || {}), [product]);
+
+    useEffect(() => {
+        if (colors.length > 0) {
+            setColor(prev => (prev && colors.includes(prev) ? prev : colors[0]));
+        } else {
+            setColor('');
+        }
+
+        if (sizes.length > 0) {
+            setSize(prev => (prev && sizes.includes(prev) ? prev : sizes[0]));
+        } else {
+            setSize('');
+        }
+    }, [colors, sizes]);
+
     async function handleSubmitReview(e) {
         e.preventDefault();
         if (!reviewRating) {
@@ -110,6 +135,24 @@ export default function ProductDetail() {
         }
     }
 
+    const wishlistEntry = useMemo(() => {
+        if (!product) return null;
+        return findWishlistItem(product.id, color, size);
+    }, [product, color, size, findWishlistItem]);
+
+    const handleToggleWishlist = async () => {
+        if (!product) return;
+        if (!isBuyer) {
+            alert('Vui lòng đăng nhập bằng tài khoản người mua để sử dụng danh sách yêu thích.');
+            return;
+        }
+        try {
+            await toggleWishlist(product, { color, size });
+        } catch (err) {
+            alert(err.message || 'Không thể cập nhật danh sách yêu thích');
+        }
+    };
+
     if (loading) {
         return (
             <div className="product-detail">
@@ -132,8 +175,6 @@ export default function ProductDetail() {
     }
 
     const vouchers = product.vouchers || [];
-    const colors = product.variants?.colors || [];
-    const sizes = product.variants?.sizes || [];
     const specs = product.specs || [];
     const description = product.description || 'Chưa có mô tả cho sản phẩm này.';
 
@@ -141,7 +182,7 @@ export default function ProductDetail() {
     const shop = {
         id: product.seller_id,
         name: product.seller_name || 'Cửa hàng V-Market',
-        avatar: '/default-avatar.png', // nếu có ảnh shop riêng thì thay ở đây
+        avatar: 'avatars/default-avatar.png',
         rating: product.rating || 4.8,
         followers: product.followers || '150k'
     };
@@ -154,7 +195,8 @@ export default function ProductDetail() {
         setQty(prev => Math.min(prev + 1, product.stock || 999));
     }
 
-    function handleAddToCart() {
+    function handleAddToCart(e) {
+        if (e?.preventDefault) e.preventDefault();
         if (colors.length > 0 && !color) {
             alert('Vui lòng chọn màu sắc');
             return;
@@ -164,6 +206,7 @@ export default function ProductDetail() {
             return;
         }
         addToCart(product, qty, { color, size });
+        flyToCart(mainImageRef.current);
         alert(`Đã thêm ${qty} sản phẩm vào giỏ hàng`);
     }
 
@@ -194,7 +237,7 @@ export default function ProductDetail() {
                 {/* Left: Media */}
                 <div className="product-detail-media">
                     <div className="pd-main-media">
-                        <img src={mainImage} alt={product.name} />
+                        <img ref={mainImageRef} src={mainImage} alt={product.name} />
                     </div>
 
                     {product.images && product.images.length > 0 && (
@@ -214,7 +257,22 @@ export default function ProductDetail() {
 
                 {/* Right: Info */}
                 <div className="product-detail-info">
-                    <h1>{product.name}</h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <h1 style={{ flex: '1 1 auto', margin: 0 }}>{product.name}</h1>
+                        <button
+                            type="button"
+                            className={`wishlist-heart ${wishlistEntry ? 'active' : ''}`}
+                            onClick={handleToggleWishlist}
+                            aria-label={wishlistEntry ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích'}
+                            style={{ position: 'static' }}
+                        >
+                            <Icon
+                                name="heart"
+                                variant={wishlistEntry ? 'solid' : 'regular'}
+                                size={22}
+                            />
+                        </button>
+                    </div>
                     <div className="product-detail-price">
                         {formatPrice(product.price)}
                     </div>
@@ -291,9 +349,13 @@ export default function ProductDetail() {
                             <div className="pd-label">Số lượng</div>
                             <div>
                                 <div className="pd-qty">
-                                    <button onClick={dec}>−</button>
+                                    <button onClick={dec} aria-label="Giảm số lượng">
+                                        <Icon name="minus" size={12} />
+                                    </button>
                                     <input type="number" value={qty} readOnly />
-                                    <button onClick={inc}>+</button>
+                                    <button onClick={inc} aria-label="Tăng số lượng">
+                                        <Icon name="plus" size={12} />
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -335,8 +397,14 @@ export default function ProductDetail() {
 
                     {/* Meta info */}
                     <div className="pd-meta">
-                        <div>📦 Danh mục: {product.category?.name || 'Chưa phân loại'}</div>
-                        <div>📊 Còn lại: {product.stock || 0} sản phẩm</div>
+                        <div className="pd-meta-row">
+                            <Icon name="box-open" size={18} className="pd-meta-icon" />
+                            <span>Danh mục: {product.category?.name || 'Chưa phân loại'}</span>
+                        </div>
+                        <div className="pd-meta-row">
+                            <Icon name="chart-column" size={18} className="pd-meta-icon" />
+                            <span>Còn lại: {product.stock || 0} sản phẩm</span>
+                        </div>
                     </div>
                 </div>
             </div>

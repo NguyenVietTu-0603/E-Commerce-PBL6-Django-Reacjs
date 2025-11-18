@@ -4,6 +4,8 @@ import ProductGrid from '../components/ProductGrid';
 import ImageSearchUpload from '../components/ImageSearchUpload';
 import Loading from '../components/Loading';
 import '../assets/CategoryPage.css';
+import Icon from '../components/Icon';
+import usePageTitle from '../hooks/usePageTitle';
 
 export default function CategoryPage() {
   const params = useParams();
@@ -65,6 +67,9 @@ export default function CategoryPage() {
       return slug === param || name === param || id === param;
     }) ?? null;
   }, [categories, rawCategoryParam, slugFromUrl]);
+
+  const pageTitle = activeCategoryObj?.name || slugFromUrl || 'Danh mục sản phẩm';
+  usePageTitle(pageTitle);
 
   // Product matching
   function productMatchesCategory(prod, identifier) {
@@ -184,7 +189,9 @@ export default function CategoryPage() {
     return (
       <div className="category-page">
         <div className="error-container">
-          <div className="error-icon">⚠️</div>
+          <div className="error-icon">
+            <Icon name="triangle-exclamation" size={28} />
+          </div>
           <h2>Có lỗi xảy ra</h2>
           <p>{error}</p>
           <button onClick={() => window.location.reload()} className="btn btn-primary">
@@ -225,8 +232,9 @@ export default function CategoryPage() {
               <button 
                 className="filters-close" 
                 onClick={() => setShowFilters(false)}
+                aria-label="Đóng bộ lọc"
               >
-                ✕
+                <Icon name="xmark" size={14} />
               </button>
             </div>
 
@@ -318,8 +326,8 @@ export default function CategoryPage() {
                 className="btn-toggle-filters"
                 onClick={() => setShowFilters(!showFilters)}
               >
-                <span>🔍</span>
-                Bộ lọc
+                <Icon name="filter" size={14} />
+                <span>Bộ lọc</span>
               </button>
 
               <ImageSearchUpload
@@ -349,7 +357,9 @@ export default function CategoryPage() {
             {/* Products Grid */}
             {effectiveFiltered.length === 0 ? (
               <div className="empty-state">
-                <div className="empty-icon">📦</div>
+                <div className="empty-icon">
+                  <Icon name="box-open" size={32} />
+                </div>
                 <h2>Không tìm thấy sản phẩm</h2>
                 <p>Vui lòng thử điều chỉnh bộ lọc hoặc tìm kiếm khác</p>
                 <button className="btn btn-primary" onClick={handleClearFilters}>
@@ -368,7 +378,8 @@ export default function CategoryPage() {
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
                     >
-                      ← Trước
+                      <Icon name="angle-left" size={12} />
+                      <span>Trước</span>
                     </button>
                     
                     <div className="pagination-pages">
@@ -388,7 +399,8 @@ export default function CategoryPage() {
                       onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
                     >
-                      Sau →
+                      <span>Sau</span>
+                      <Icon name="angle-right" size={12} />
                     </button>
                   </div>
                 )}

@@ -49,3 +49,7 @@ def run():
         print(f"❌ Lỗi: {e}")
         import traceback
         traceback.print_exc()
+
+
+# 🔥 Quan trọng: gọi hàm run()
+run()

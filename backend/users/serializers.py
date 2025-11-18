@@ -10,14 +10,15 @@ class ProfileSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Profile
-        fields = ['avatar', 'bio', 'address', 'city', 'country', 'postal_code']
+        fields = ['avatar', 'bio', 'address', 'city', 'district', 'ward', 'country']
         extra_kwargs = {
             'avatar': {'required': False},
             'bio': {'required': False},
             'address': {'required': False},
             'city': {'required': False},
+            'district': {'required': False},
+            'ward': {'required': False},
             'country': {'required': False},
-            'postal_code': {'required': False},
         }
 
 

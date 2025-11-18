@@ -242,7 +242,7 @@ JAZZMIN_SETTINGS = {
     "login_logo_dark": "images/logo.png",
 
     "theme": "cosmo",
-    "custom_css": "css/admin_custom.css",
+    "custom_css": "static/css/admin_custom.css",
 
     # Sidebar menu
     "show_sidebar": True,

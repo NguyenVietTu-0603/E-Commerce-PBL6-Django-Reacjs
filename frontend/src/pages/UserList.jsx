@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import authService from '../utils/authService';
 import { USER_STATUS } from '../data/constants';
+import usePageTitle from '../hooks/usePageTitle';
 
 const UserList = () => {
   const [users, setUsers] = useState([]);
@@ -14,6 +15,8 @@ const UserList = () => {
   useEffect(() => {
     fetchUsers();
   }, [filters]);
+
+  usePageTitle('Quản lý người dùng');
 
   const fetchUsers = async () => {
     setLoading(true);

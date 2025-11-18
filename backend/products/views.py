@@ -1,8 +1,14 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
-from .serializers import ProductCreateSerializer, CategorySerializer, ProductSerializer
-from .models import Product, Category
+from .serializers import (
+    ProductCreateSerializer,
+    CategorySerializer,
+    ProductSerializer,
+    WishlistItemSerializer,
+    SavedItemSerializer,
+)
+from .models import Product, Category, WishlistItem, SavedItem
 from rest_framework import viewsets, mixins
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework import parsers
@@ -14,6 +20,17 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from PIL import Image
 import numpy as np
 from django.db.models import Count, Q
+
+
+class BuyerOnlyPermission(permissions.BasePermission):
+    message = 'Chức năng này chỉ dành cho người mua.'
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and getattr(request.user, 'user_type', None) == 'buyer'
+        )
 
 class ProductCreateView(generics.CreateAPIView):
     queryset = Product.objects.all()
@@ -125,3 +142,120 @@ class ImageSearchView(APIView):
                 "similarity": float(sims[int(idx)]),
             })
         return Response({"results": results})
+
+
+class WishlistViewSet(mixins.ListModelMixin,
+                      mixins.CreateModelMixin,
+                      mixins.DestroyModelMixin,
+                      viewsets.GenericViewSet):
+    serializer_class = WishlistItemSerializer
+    permission_classes = [permissions.IsAuthenticated, BuyerOnlyPermission]
+
+    def get_queryset(self):
+        return (
+            WishlistItem.objects.filter(user=self.request.user)
+            .select_related('product', 'product__category', 'product__seller')
+            .order_by('-created_at')
+        )
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated = serializer.validated_data
+        product = validated.get('product')
+        if product is None:
+            return Response({'detail': 'product_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        color = (validated.get('color') or '').strip()
+        size = (validated.get('size') or '').strip()
+        note = validated.get('note', '')
+
+        instance, created = WishlistItem.objects.get_or_create(
+            user=request.user,
+            product=product,
+            color=color,
+            size=size,
+            defaults={'note': note},
+        )
+        if not created and note:
+            instance.note = note
+            instance.save(update_fields=['note', 'updated_at'])
+
+        output = self.get_serializer(instance)
+        return Response(output.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.user != request.user:
+            raise PermissionDenied('Not allowed to modify this wishlist item.')
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SavedItemViewSet(mixins.ListModelMixin,
+                       mixins.CreateModelMixin,
+                       mixins.UpdateModelMixin,
+                       mixins.DestroyModelMixin,
+                       viewsets.GenericViewSet):
+    serializer_class = SavedItemSerializer
+    permission_classes = [permissions.IsAuthenticated, BuyerOnlyPermission]
+
+    def get_queryset(self):
+        return (
+            SavedItem.objects.filter(user=self.request.user)
+            .select_related('product', 'product__category', 'product__seller')
+            .order_by('-moved_from_cart_at')
+        )
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated = serializer.validated_data
+        product = validated.get('product')
+        if product is None:
+            return Response({'detail': 'product_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        color = (validated.get('color') or '').strip()
+        size = (validated.get('size') or '').strip()
+        quantity = validated.get('quantity') or 1
+
+        instance, created = SavedItem.objects.get_or_create(
+            user=request.user,
+            product=product,
+            color=color,
+            size=size,
+            defaults={'quantity': quantity},
+        )
+        if not created:
+            instance.quantity = max(1, instance.quantity + quantity)
+            instance.save(update_fields=['quantity', 'updated_at'])
+
+        output = self.get_serializer(instance)
+        return Response(output.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.user != request.user:
+            raise PermissionDenied('Not allowed to modify this saved item.')
+
+        quantity = request.data.get('quantity')
+        if quantity is None:
+            return Response({'detail': 'quantity is required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            quantity = int(quantity)
+        except (TypeError, ValueError):
+            return Response({'detail': 'quantity must be an integer'}, status=status.HTTP_400_BAD_REQUEST)
+        instance.quantity = max(1, quantity)
+        instance.save(update_fields=['quantity', 'updated_at'])
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.user != request.user:
+            raise PermissionDenied('Not allowed to modify this saved item.')
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

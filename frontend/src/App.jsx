@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './utils/AuthContext';
 import { CartProvider } from './utils/CartContext';
+import { WishlistProvider } from './utils/WishlistContext';
 import PrivateRoute from './components/PrivateRoute';
 import Header from './components/Header';
 import Layout from './components/Layout';
@@ -25,6 +26,8 @@ import OrderSuccess from './pages/OrderSuccess';
 import Chat from './pages/Chat';
 import ShopChat from './pages/ShopChat';
 import SearchResults from './pages/SearchResults'; // thêm
+import Wishlist from './pages/Wishlist';
+import ChatWidget from './components/ChatWidget';
 import './assets/Components.css';
 
 function App() {
@@ -32,6 +35,7 @@ function App() {
     <Router>
       <AuthProvider>
         <CartProvider>
+          <WishlistProvider>
           <div className="App">
             <Header />
             <Routes>
@@ -47,6 +51,16 @@ function App() {
 
               {/* Cart */}
               <Route path="/cart" element={<Cart />} />
+
+              {/* Wishlist */}
+              <Route
+                path="/wishlist"
+                element={
+                  <PrivateRoute allowedRoles={['buyer']}>
+                    <Wishlist />
+                  </PrivateRoute>
+                }
+              />
 
               {/* giữ các route khác */}
               <Route path="/login" element={<Login />} />
@@ -138,7 +152,9 @@ function App() {
               {/* Default */}
               <Route path="*" element={<RoleBasedRedirect />} />
             </Routes>
+            <ChatWidget />
           </div>
+          </WishlistProvider>
         </CartProvider>
       </AuthProvider>
     </Router>

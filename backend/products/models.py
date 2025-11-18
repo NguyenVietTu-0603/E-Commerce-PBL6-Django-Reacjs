@@ -38,10 +38,12 @@ class Product(models.Model):
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=12, decimal_places=2)
     stock = models.PositiveIntegerField(default=0)
+    color_options = models.JSONField(default=list, blank=True)
+    size_options = models.JSONField(default=list, blank=True)
     image = models.ImageField(upload_to='products/', blank=True, null=True)
     image_url = models.URLField(max_length=500, blank=True)
     image_embedding = models.JSONField(null=True, blank=True)
-    is_active = models.BooleanField(default=True)   
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -50,3 +52,91 @@ class Product(models.Model):
 
     def __str__(self):
         return f'{self.name} ({self.seller})'
+
+
+class WishlistItem(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlist_items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='wishlisted_items')
+    color = models.CharField(max_length=50, blank=True)
+    size = models.CharField(max_length=50, blank=True)
+    note = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'product', 'color', 'size'),
+                name='uniq_wishlist_user_product_variant'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user} -> {self.product} ({self.color or 'no-color'}/{self.size or 'no-size'})"
+
+
+class SavedItem(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='saved_by_items')
+    quantity = models.PositiveIntegerField(default=1)
+    color = models.CharField(max_length=50, blank=True)
+    size = models.CharField(max_length=50, blank=True)
+    moved_from_cart_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-moved_from_cart_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'product', 'color', 'size'),
+                name='uniq_saved_user_product_variant'
+            )
+        ]
+
+    def __str__(self):
+        return f"Saved {self.product} for {self.user}"
+
+
+class WishlistItem(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlist_items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='wishlisted_items')
+    color = models.CharField(max_length=50, blank=True)
+    size = models.CharField(max_length=50, blank=True)
+    note = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'product', 'color', 'size'],
+                name='uniq_wishlist_user_product_variant'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user} ❤ {self.product}"
+
+
+class SavedItem(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='saved_by_items')
+    quantity = models.PositiveIntegerField(default=1)
+    color = models.CharField(max_length=50, blank=True)
+    size = models.CharField(max_length=50, blank=True)
+    moved_from_cart_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-moved_from_cart_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'product', 'color', 'size'],
+                name='uniq_saved_user_product_variant'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user} saved {self.product}"
