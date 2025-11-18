@@ -71,7 +71,7 @@ def run():
     have_remote = 0
 
     processed = 0
-    MAX_ROWS = 2000
+    MAX_ROWS = 20
 
     COLORS = [
         'Red', 'Blue', 'Green', 'Black', 'White', 'Yellow', 
