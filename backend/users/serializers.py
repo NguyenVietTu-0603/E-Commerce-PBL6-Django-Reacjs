@@ -225,3 +225,90 @@ class UserListSerializer(serializers.ModelSerializer):
         model = User
         fields = ['user_id', 'username', 'email', 'full_name', 'user_type', 'status', 'created_at']
         read_only_fields = ['user_id', 'created_at']
+
+# ============================================
+# SHOP SERIALIZERS (THÊM VÀO CUỐI FILE)
+# ============================================
+
+class SellerPublicSerializer(serializers.ModelSerializer):
+    """
+    Public seller profile for shop page
+    Hiển thị thông tin công khai của shop cho buyer xem
+    """
+    profile = ProfileSerializer(read_only=True)
+    total_products = serializers.SerializerMethodField()
+    active_products = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField()
+    total_sales = serializers.SerializerMethodField()
+    joined_date = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = [
+            'user_id',
+            'username',
+            'full_name',
+            'email',
+            'phone',
+            'profile',  # avatar, bio, address, city
+            'total_products',
+            'active_products',
+            'rating',
+            'total_sales',
+            'joined_date',
+        ]
+    
+    def get_total_products(self, obj):
+        """Tổng số sản phẩm của seller"""
+        from products.models import Product
+        return Product.objects.filter(seller=obj).count()
+    
+    def get_active_products(self, obj):
+        """Số sản phẩm đang active"""
+        from products.models import Product
+        return Product.objects.filter(seller=obj, is_active=True).count()
+    
+    def get_rating(self, obj):
+        """Đánh giá trung bình (tạm thời hardcode, sau sẽ tính từ reviews)"""
+        # TODO: Implement rating system với Review model
+        import random
+        return round(random.uniform(4.5, 5.0), 1)
+    
+    def get_total_sales(self, obj):
+        """Tổng số đơn hàng đã bán"""
+        from orders.models import OrderItem
+        items = OrderItem.objects.filter(
+            product__seller=obj,
+            order__status='completed'
+        )
+        return items.count()
+    
+    def get_joined_date(self, obj):
+        """Ngày tham gia (format đẹp)"""
+        return obj.created_at.strftime('%B %Y')  # "January 2024"
+
+
+class SellerMiniSerializer(serializers.ModelSerializer):
+    """
+    Mini serializer cho seller - dùng trong product list
+    Chỉ hiển thị thông tin cơ bản
+    """
+    avatar = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ['user_id', 'username', 'full_name', 'avatar', 'rating']
+    
+    def get_avatar(self, obj):
+        """Lấy avatar từ profile"""
+        if hasattr(obj, 'profile') and obj.profile.avatar:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.profile.avatar.url)
+        return None
+    
+    def get_rating(self, obj):
+        """Rating của shop"""
+        import random
+        return round(random.uniform(4.5, 5.0), 1)

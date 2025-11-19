@@ -20,6 +20,11 @@ from .views import (
     # Profile
     ProfileView,
     current_user,
+    
+    # Shop views (THÊM)
+    get_all_shops,
+    seller_shop_profile,
+    shop_statistics,
 )
 
 urlpatterns = [
@@ -43,4 +48,9 @@ urlpatterns = [
     path('<int:user_id>/', UserManageView.as_view(), name='user-manage'),  # Admin only
     path('<int:user_id>/status/', UserStatusUpdateView.as_view(), name='user-status'),  # Admin only
     path('statistics/', UserStatisticsView.as_view(), name='user-statistics'),  # Admin only
+    
+    # ==================== SHOP ENDPOINTS (THÊM CUỐI) ====================
+    path('shops/', get_all_shops, name='all-shops'),  # Danh sách tất cả shop
+    path('shop/<int:seller_id>/', seller_shop_profile, name='seller-shop'),  # Shop detail + products
+    path('shop/<int:seller_id>/stats/', shop_statistics, name='shop-stats'),  # Shop statistics
 ]
