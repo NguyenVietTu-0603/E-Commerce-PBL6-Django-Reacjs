@@ -8,6 +8,8 @@ from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.db.models import Q, Count
+
 from .serializers import UserSerializer
 
 from .models import User, Profile
@@ -488,3 +490,232 @@ def current_user(request):
     """
     serializer = UserSerializer(request.user, context={'request': request})
     return Response(serializer.data)
+
+
+# ============================================
+# SHOP VIEWS (THÊM VÀO CUỐI FILE)
+# ============================================
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_all_shops(request):
+    """
+    Lấy danh sách tất cả seller shops
+    
+    GET /api/users/shops/
+    Query params:
+    - search: tìm kiếm theo tên, username, bio
+    - sort: newest, oldest, popular, rating
+    """
+    try:
+        # Lấy tất cả seller đang active
+        shops = User.objects.filter(
+            user_type='seller',
+            status='active',
+            is_active=True
+        )
+        
+        # Search
+        search = request.GET.get('search', '').strip()
+        if search:
+            shops = shops.filter(
+                Q(username__icontains=search) |
+                Q(full_name__icontains=search) |
+                Q(profile__bio__icontains=search)
+            )
+        
+        # Sorting
+        sort_by = request.GET.get('sort', 'newest')
+        if sort_by == 'newest':
+            shops = shops.order_by('-created_at')
+        elif sort_by == 'oldest':
+            shops = shops.order_by('created_at')
+        elif sort_by == 'popular':
+            # Sort by number of products (descending)
+            from products.models import Product
+            shops = shops.annotate(
+                product_count=Count('product')
+            ).order_by('-product_count')
+        
+        # Serialize
+        from .serializers import SellerPublicSerializer
+        serializer = SellerPublicSerializer(
+            shops,
+            many=True,
+            context={'request': request}
+        )
+        
+        return Response({
+            'success': True,
+            'count': shops.count(),
+            'results': serializer.data
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        print(f"Error in get_all_shops: {str(e)}")
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def seller_shop_profile(request, seller_id):
+    """
+    Lấy thông tin shop của seller và danh sách sản phẩm
+    
+    GET /api/users/shop/<seller_id>/
+    Query params:
+    - search: tìm sản phẩm trong shop
+    - category: lọc theo category
+    - min_price, max_price: lọc theo giá
+    - sort: newest, oldest, price_low, price_high, name
+    """
+    try:
+        # Lấy seller
+        seller = get_object_or_404(
+            User,
+            user_id=seller_id,
+            user_type='seller',
+            status='active'
+        )
+        
+        # Serialize seller info
+        from .serializers import SellerPublicSerializer
+        seller_serializer = SellerPublicSerializer(
+            seller,
+            context={'request': request}
+        )
+        
+        # Lấy products của seller
+        from products.models import Product
+        from products.serializers import ProductSerializer
+        
+        products = Product.objects.filter(
+            seller=seller,
+            is_active=True
+        )
+        
+        # Filters
+        search = request.GET.get('search', '').strip()
+        if search:
+            products = products.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
+        
+        category = request.GET.get('category')
+        if category:
+            products = products.filter(category_id=category)
+        
+        min_price = request.GET.get('min_price')
+        if min_price:
+            products = products.filter(price__gte=min_price)
+        
+        max_price = request.GET.get('max_price')
+        if max_price:
+            products = products.filter(price__lte=max_price)
+        
+        # Sorting
+        sort_by = request.GET.get('sort', 'newest')
+        if sort_by == 'newest':
+            products = products.order_by('-created_at')
+        elif sort_by == 'oldest':
+            products = products.order_by('created_at')
+        elif sort_by == 'price_low':
+            products = products.order_by('price')
+        elif sort_by == 'price_high':
+            products = products.order_by('-price')
+        elif sort_by == 'name':
+            products = products.order_by('name')
+        
+        # Serialize products
+        products_serializer = ProductSerializer(
+            products,
+            many=True,
+            context={'request': request}
+        )
+        
+        return Response({
+            'success': True,
+            'seller': seller_serializer.data,
+            'products': {
+                'count': products.count(),
+                'results': products_serializer.data,
+            }
+        }, status=status.HTTP_200_OK)
+        
+    except User.DoesNotExist:
+        return Response(
+            {'error': 'Shop không tồn tại'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        print(f"Error in seller_shop_profile: {str(e)}")
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def shop_statistics(request, seller_id):
+    """
+    Thống kê công khai của shop
+    
+    GET /api/users/shop/<seller_id>/stats/
+    """
+    try:
+        seller = get_object_or_404(
+            User,
+            user_id=seller_id,
+            user_type='seller'
+        )
+        
+        from products.models import Product
+        from orders.models import OrderItem
+        
+        # Products stats
+        total_products = Product.objects.filter(seller=seller).count()
+        active_products = Product.objects.filter(
+            seller=seller,
+            is_active=True
+        ).count()
+        
+        # Orders stats
+        total_sales = OrderItem.objects.filter(
+            product__seller=seller,
+            order__status='completed'
+        ).count()
+        
+        # Recent products
+        recent_products = Product.objects.filter(
+            seller=seller,
+            is_active=True
+        ).order_by('-created_at')[:5]
+        
+        from products.serializers import ProductSerializer
+        recent_products_data = ProductSerializer(
+            recent_products,
+            many=True,
+            context={'request': request}
+        ).data
+        
+        return Response({
+            'success': True,
+            'stats': {
+                'total_products': total_products,
+                'active_products': active_products,
+                'total_sales': total_sales,
+                'rating': 4.8,  # TODO: Calculate from reviews
+            },
+            'recent_products': recent_products_data
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import authService from "../utils/authService";
 import '../assets/authPages.css'
 
 export default function AuthModal({
   open = false,
   initialMode = "login", // 'login' | 'register'
-  onClose = () => {},
-  onLoginSuccess = () => {},
-  onRegisterSuccess = () => {},
+  onClose = () => { },
+  onLoginSuccess = () => { },
+  onRegisterSuccess = () => { },
 }) {
+  const navigate = useNavigate();
+
   const [mode, setMode] = useState(initialMode);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -34,37 +37,77 @@ export default function AuthModal({
 
   if (!open) return null;
 
+  // Map user_type -> redirect path. Edit mapping if you need different routes.
+  const getRedirectForRole = (role) => {
+    switch ((role || "").toString().toLowerCase()) {
+      case "seller":
+        return "/seller/dashboard";
+      case "buyer":
+        return "/";
+      case "admin":
+        return "/admin/dashboard";
+      default:
+        return "/dashboard";
+    }
+  };
+
   async function handleSubmit(e) {
     e?.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
+      let data;
+      let user;
+
       if (mode === "login") {
-        const data = await authService.login(username || email, password);
-        // authService.login returns parsed API response or fallback object
-        const user = data.user ?? data;
-        // persist user if provided
-        try { if (user) localStorage.setItem("user", JSON.stringify(user)); } catch {}
-        if (onLoginSuccess) onLoginSuccess(user);
+        // login có thể dùng username hoặc email
+        data = await authService.login(username || email, password);
+        user = data?.user ?? data;
       } else {
         const payload = { username, email, password, user_type: userType };
-        const data = await authService.register(payload);
-        const user = data.user ?? data;
-        try { if (user) localStorage.setItem("user", JSON.stringify(user)); } catch {}
-        if (onRegisterSuccess) onRegisterSuccess(user);
+        data = await authService.register(payload);
+        user = data?.user ?? data;
       }
+
+      // persist user
+      try {
+        if (user) localStorage.setItem("user", JSON.stringify(user));
+      } catch { }
+
+      // callback cho parent
+      if (mode === "login" && onLoginSuccess) onLoginSuccess(user);
+      if (mode === "register" && onRegisterSuccess) onRegisterSuccess(user);
+
       setLoading(false);
-      onClose();
+
+      // đóng modal trước
+      try { onClose(); } catch { }
+
+      // redirect tự động theo role
+      const role = user?.user_type ?? user?.role ?? null;
+      const redirectPath = getRedirectForRole(role);
+      if (redirectPath) navigate(redirectPath);
+
     } catch (err) {
       setLoading(false);
-      // normalize error message
+
       if (typeof err === "string") setError(err);
       else if (err && err.detail) setError(err.detail);
       else if (err && err.message) setError(err.message);
-      else setError("Có lỗi xảy ra. Vui lòng thử lại.");
+      else if (err?.response?.data) {
+        const resp = err.response.data;
+        if (typeof resp === "string") setError(resp);
+        else if (resp.error) setError(resp.error);
+        else if (resp.detail) setError(resp.detail);
+        else if (resp.message) setError(resp.message);
+        else setError("Có lỗi xảy ra. Vui lòng thử lại.");
+      } else {
+        setError("Có lỗi xảy ra. Vui lòng thử lại.");
+      }
     }
   }
+
 
   return (
     <div className="auth-modal-overlay" role="dialog" aria-modal="true">

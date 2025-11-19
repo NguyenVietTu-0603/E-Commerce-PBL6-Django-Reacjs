@@ -39,17 +39,103 @@ class OrderSerializer(serializers.ModelSerializer):
             )
         return order
 
+class OrderItemResponseSerializer(serializers.ModelSerializer):
+    """Serializer for an order item used in responses."""
+    product = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrderItem
+        fields = (
+            'id',
+            'product_id',
+            'product',
+            'quantity',
+            'price',
+            'color',
+            'size',
+        )
+
+    def get_product(self, obj):
+        p = getattr(obj, 'product', None)
+        if p is None:
+            return {'id': obj.product_id}
+        image = None
+        try:
+            if getattr(p, 'image', None):
+                image_field = getattr(p, 'image')
+                image = image_field.url if hasattr(image_field, 'url') else None
+        except Exception:
+            image = None
+        return {
+            'id': p.id,
+            'name': getattr(p, 'name', None),
+            'image': image,
+        }
+
+
 class OrderResponseSerializer(serializers.ModelSerializer):
-    items = serializers.SerializerMethodField()
+    items = OrderItemResponseSerializer(many=True, read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    items_count = serializers.SerializerMethodField()
+    buyer_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Order
-        fields = ('order_id','status','total_amount','created_at','items')
-
-    def get_items(self, obj):
-        return [
-            {
-                'product': item.product.name if hasattr(item.product, 'name') else item.product_id,
-                'quantity': item.quantity,
-                'price': item.price
-            } for item in obj.items.all()
+        fields = [
+            'order_id',
+            'user',
+            'buyer_name',
+            'full_name',
+            'phone',
+            'email',
+            'address',
+            'ward',
+            'district',
+            'city',
+            'payment_method',
+            'notes',
+            'status',
+            'status_display',
+            'total_amount',
+            'items',
+            'items_count',
+            'created_at',
         ]
+
+    def get_items_count(self, obj):
+        return obj.items.count()
+
+    def get_buyer_name(self, obj):
+        if obj.user:
+            return getattr(obj.user, 'full_name', None) or obj.user.username
+        return obj.full_name
+
+
+class OrderListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for listing orders"""
+    items_count = serializers.SerializerMethodField()
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    buyer_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Order
+        fields = [
+            'order_id',
+            'buyer_name',
+            'full_name',
+            'phone',
+            'status',
+            'status_display',
+            'payment_method',
+            'total_amount',
+            'items_count',
+            'created_at',
+        ]
+
+    def get_items_count(self, obj):
+        return obj.items.count()
+
+    def get_buyer_name(self, obj):
+        if obj.user:
+            return getattr(obj.user, 'full_name', None) or obj.user.username
+        return obj.full_name

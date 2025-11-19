@@ -140,3 +140,5 @@ class SavedItem(models.Model):
 
     def __str__(self):
         return f"{self.user} saved {self.product}"
+    def __str__(self):
+        return f'{self.name} ({self.seller})'
