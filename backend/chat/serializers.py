@@ -54,7 +54,7 @@ class ConversationSerializer(serializers.ModelSerializer):
         prefetched = getattr(obj, "_prefetched_messages", None)
         if prefetched:
             return prefetched[0]
-        return obj.messages.order_by("-created_at").first()
+        return obj.messages.order_by("-created_at", "-id").first()
 
     def get_last_message(self, obj):
         msg = self._get_last_message(obj)
@@ -70,9 +70,10 @@ class ConversationSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         user = getattr(request, "user", None)
         if user and getattr(user, "is_authenticated", False):
-            if obj.buyer_id == getattr(user, "user_id", None):
+            user_id = getattr(user, "pk", None)
+            if obj.buyer_id == user_id:
                 return obj.buyer_unread
-            if obj.shop_id == getattr(user, "user_id", None):
+            if obj.shop_id == user_id:
                 return obj.shop_unread
         viewer = self.context.get("viewer")
         if viewer == "buyer":
@@ -80,3 +81,18 @@ class ConversationSerializer(serializers.ModelSerializer):
         if viewer == "seller":
             return obj.shop_unread
         return obj.buyer_unread + obj.shop_unread
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender_id = serializers.IntegerField(source="sender.id", read_only=True)
+
+    class Meta:
+        model = Message
+        fields = [
+            "id",
+            "conversation",
+            "sender_id",
+            "content",
+            "created_at",
+        ]
+        read_only_fields = ["id", "sender_id", "created_at"]

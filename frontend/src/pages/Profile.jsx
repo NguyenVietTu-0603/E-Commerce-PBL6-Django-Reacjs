@@ -468,15 +468,23 @@ const Profile = () => {
               </div>
 
               <div className="order-items-preview">
-                {itemsPreview.map((it, idx) => (
-                  <div key={idx} className="order-item-chip">
-                    <div>
-                      <p>{it.product}</p>
-                      <span>SL {it.quantity}</span>
+                {itemsPreview.map((it, idx) => {
+                  const productName =
+                    typeof it.product === 'string'
+                      ? it.product
+                      : it.product?.name || `Sản phẩm ${idx + 1}`;
+                  const linePrice = (Number(it.price) || 0) * (Number(it.quantity) || 0);
+
+                  return (
+                    <div key={idx} className="order-item-chip">
+                      <div>
+                        <p>{productName}</p>
+                        <span>SL {it.quantity}</span>
+                      </div>
+                      <span>{formatPrice(linePrice)}</span>
                     </div>
-                    <span>{formatPrice((it.price || 0) * (it.quantity || 0))}</span>
-                  </div>
-                ))}
+                  );
+                })}
                 {remainingItems > 0 && (
                   <div className="order-items-more">
                     +{remainingItems} sản phẩm khác

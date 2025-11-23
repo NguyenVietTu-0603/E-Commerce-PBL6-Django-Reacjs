@@ -7,9 +7,6 @@ from .models import Product, Category, WishlistItem, SavedItem
 from reviews.models import Review
 
 
-# ============================================
-# CATEGORY
-# ============================================
 
 class CategorySerializer(serializers.ModelSerializer):
     """Category serializer, bao gồm optional product_count"""
@@ -22,10 +19,6 @@ class CategorySerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["slug", "created_at"]
 
-
-# ============================================
-# PRODUCT
-# ============================================
 
 class ProductSerializer(serializers.ModelSerializer):
     """Serializer dùng cho GET/read"""
@@ -102,16 +95,20 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Số lượng không được âm")
         return value
 
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if not self.instance:
+            category = attrs.get("category")
+            if category is None:
+                raise serializers.ValidationError({"category": "Danh mục là bắt buộc."})
+        return attrs
+
     def create(self, validated_data):
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
             validated_data['seller'] = request.user
         return super().create(validated_data)
 
-
-# ============================================
-# WISHLIST ITEM
-# ============================================
 
 class WishlistItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
@@ -128,10 +125,36 @@ class WishlistItemSerializer(serializers.ModelSerializer):
         validated_data.pop('product', None)
         return super().update(instance, validated_data)
 
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        color = (attrs.get('color') or '').strip()
+        size = (attrs.get('size') or '').strip()
+        attrs['color'] = color
+        attrs['size'] = size
 
-# ============================================
-# SAVED ITEM
-# ============================================
+        if not self.instance:
+            product = attrs.get('product')
+            errors = {}
+
+            if product:
+                color_options = product.color_options or []
+                size_options = product.size_options or []
+
+                if color and color_options and color not in color_options:
+                    errors['color'] = ['Color is not available for this product.']
+                if size and size_options and size not in size_options:
+                    errors['size'] = ['Size is not available for this product.']
+
+                if color_options and not color:
+                    errors['color'] = ['Color is required for this product.']
+                if size_options and not size:
+                    errors['size'] = ['Size is required for this product.']
+
+            if errors:
+                raise serializers.ValidationError(errors)
+
+        return attrs
+
 
 class SavedItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
@@ -148,3 +171,11 @@ class SavedItemSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         validated_data.pop('product', None)
         return super().update(instance, validated_data)
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        product = attrs.get('product') or getattr(self.instance, 'product', None)
+        quantity = attrs.get('quantity') or getattr(self.instance, 'quantity', 1)
+        if product and product.stock is not None and quantity > product.stock:
+            raise serializers.ValidationError({'quantity': ['Quantity exceeds available stock.']})
+        return attrs

@@ -19,9 +19,6 @@ from .serializers import (
 from .models import Product, Category, WishlistItem, SavedItem
 from clip_service import embed_pil  # nếu bạn dùng embedding image
 
-# ============================================
-# PERMISSIONS
-# ============================================
 
 class BuyerOnlyPermission(permissions.BasePermission):
     message = 'Chức năng này chỉ dành cho người mua.'
@@ -32,10 +29,6 @@ class BuyerOnlyPermission(permissions.BasePermission):
             and request.user.is_authenticated
             and getattr(request.user, 'user_type', None) == 'buyer'
         )
-
-# ============================================
-# PRODUCT & CATEGORY VIEWSETS
-# ============================================
 
 class ProductViewSet(viewsets.ModelViewSet):
     """CRUD sản phẩm với filter/search"""
@@ -121,9 +114,6 @@ class CategoryViewSet(viewsets.ModelViewSet):
         queryset = queryset.annotate(product_count=Count("products", filter=Q(products__is_active=True)))
         return queryset
 
-# ============================================
-# IMAGE SEARCH
-# ============================================
 
 class ImageSearchView(APIView):
     parser_classes = [MultiPartParser]
@@ -166,10 +156,6 @@ class ImageSearchView(APIView):
                 "similarity": float(sims[int(idx)]),
             })
         return Response({"results": results})
-
-# ============================================
-# WISHLIST & SAVED ITEMS
-# ============================================
 
 class WishlistViewSet(mixins.ListModelMixin,
                       mixins.CreateModelMixin,
@@ -242,18 +228,41 @@ class SavedItemViewSet(mixins.ListModelMixin,
         size = (validated.get('size') or '').strip()
         quantity = validated.get('quantity') or 1
 
-        instance, created = SavedItem.objects.get_or_create(
+        if product.stock is not None:
+            if quantity > product.stock:
+                return Response(
+                    {'quantity': ['Quantity exceeds available stock.']},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        instance = SavedItem.objects.filter(
             user=request.user,
             product=product,
             color=color,
             size=size,
-            defaults={'quantity': quantity},
-        )
-        if not created:
-            instance.quantity = max(1, instance.quantity + quantity)
+        ).first()
+
+        if instance:
+            new_quantity = instance.quantity + quantity
+            if product.stock is not None and new_quantity > product.stock:
+                return Response(
+                    {'quantity': ['Quantity exceeds available stock.']},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            instance.quantity = new_quantity
             instance.save(update_fields=['quantity', 'updated_at'])
-        return Response(self.get_serializer(instance).data,
-                        status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+            status_code = status.HTTP_200_OK
+        else:
+            instance = SavedItem.objects.create(
+                user=request.user,
+                product=product,
+                color=color,
+                size=size,
+                quantity=quantity,
+            )
+            status_code = status.HTTP_201_CREATED
+
+        return Response(self.get_serializer(instance).data, status=status_code)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -266,7 +275,11 @@ class SavedItemViewSet(mixins.ListModelMixin,
             quantity = int(quantity)
         except (TypeError, ValueError):
             return Response({'detail': 'quantity must be an integer'}, status=status.HTTP_400_BAD_REQUEST)
-        instance.quantity = max(1, quantity)
+        if quantity < 1:
+            return Response({'quantity': ['Quantity must be at least 1.']}, status=status.HTTP_400_BAD_REQUEST)
+        if instance.product.stock is not None and quantity > instance.product.stock:
+            return Response({'quantity': ['Quantity exceeds available stock.']}, status=status.HTTP_400_BAD_REQUEST)
+        instance.quantity = quantity
         instance.save(update_fields=['quantity', 'updated_at'])
         return Response(self.get_serializer(instance).data)
 
@@ -279,10 +292,6 @@ class SavedItemViewSet(mixins.ListModelMixin,
             raise PermissionDenied('Not allowed to modify this saved item.')
         instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-# ============================================
-# SELLER-SPECIFIC ENDPOINTS
-# ============================================
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

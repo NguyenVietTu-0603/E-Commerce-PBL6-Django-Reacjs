@@ -5,7 +5,7 @@ from django.utils.text import slugify
 User = settings.AUTH_USER_MODEL
 
 class Category(models.Model):
-    name = models.CharField(max_length=120, unique=True)
+    name = models.CharField(max_length=120)
     slug = models.SlugField(max_length=140, unique=True, blank=True)
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='children')
     is_active = models.BooleanField(default=True)
@@ -18,7 +18,7 @@ class Category(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            base = slugify(self.name)
+            base = slugify(self.name or "category") or "category"
             slug = base
             i = 1
             while Category.objects.filter(slug=slug).exclude(pk=self.pk).exists():
@@ -52,6 +52,13 @@ class Product(models.Model):
 
     def __str__(self):
         return f'{self.name} ({self.seller})'
+
+    def save(self, *args, **kwargs):
+        if self.price is None or self.price <= 0:
+            raise ValueError("Price must be greater than zero.")
+        if self.stock is not None and self.stock < 0:
+            raise ValueError("Stock cannot be negative.")
+        super().save(*args, **kwargs)
 
 
 class WishlistItem(models.Model):
@@ -96,49 +103,3 @@ class SavedItem(models.Model):
 
     def __str__(self):
         return f"Saved {self.product} for {self.user}"
-
-
-class WishlistItem(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlist_items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='wishlisted_items')
-    color = models.CharField(max_length=50, blank=True)
-    size = models.CharField(max_length=50, blank=True)
-    note = models.CharField(max_length=255, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['-created_at']
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'product', 'color', 'size'],
-                name='uniq_wishlist_user_product_variant'
-            )
-        ]
-
-    def __str__(self):
-        return f"{self.user} ❤ {self.product}"
-
-
-class SavedItem(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='saved_by_items')
-    quantity = models.PositiveIntegerField(default=1)
-    color = models.CharField(max_length=50, blank=True)
-    size = models.CharField(max_length=50, blank=True)
-    moved_from_cart_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['-moved_from_cart_at']
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'product', 'color', 'size'],
-                name='uniq_saved_user_product_variant'
-            )
-        ]
-
-    def __str__(self):
-        return f"{self.user} saved {self.product}"
-    def __str__(self):
-        return f'{self.name} ({self.seller})'

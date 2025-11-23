@@ -2,8 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
 import usePageTitle from '../hooks/usePageTitle';
-
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:8000';
+import { buildWsUrl } from '../utils/wsConfig';
 
 export default function ShopChat() {
   const { shopId, buyerId } = useParams();
@@ -23,13 +22,14 @@ export default function ShopChat() {
     }
 
     const token = localStorage.getItem('access_token') || '';
-    const raw = API_BASE.replace(/^https?:\/\//,'');
-    const wsProtocol = API_BASE.startsWith('https') ? 'wss' : 'ws';
-
     const qs = new URLSearchParams({ token });
     if (buyerId) qs.set('buyer', buyerId);
 
-    const wsUrl = `${wsProtocol}://${raw}/ws/chat/${shopId}/?${qs.toString()}`;
+    const wsUrl = buildWsUrl(`/ws/chat/${shopId}/`, qs);
+    if (!wsUrl) {
+      console.error('WS error: unable to resolve shop chat endpoint');
+      return undefined;
+    }
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
