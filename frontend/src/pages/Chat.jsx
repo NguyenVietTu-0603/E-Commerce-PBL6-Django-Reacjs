@@ -3,8 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
 import usePageTitle from '../hooks/usePageTitle';
-
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:8000';
+import { buildWsUrl } from '../utils/wsConfig';
 
 export default function Chat() {
   const { shopId } = useParams();  // :shopId từ URL
@@ -24,8 +23,6 @@ export default function Chat() {
     }
 
     const token = localStorage.getItem('access_token') || '';
-    const raw = API_BASE.replace(/^https?:\/\//, '');
-    const wsProtocol = API_BASE.startsWith('https') ? 'wss' : 'ws';
     const params = new URLSearchParams(window.location.search);
     const product = params.get('product');
     const qs = new URLSearchParams({ token });
@@ -33,7 +30,11 @@ export default function Chat() {
     // Gửi luôn buyerId (user hiện tại) để backend phân biệt conversation
     qs.set('buyer', user.user_id);
 
-    const wsUrl = `${wsProtocol}://${raw}/ws/chat/${shopId}/?${qs.toString()}`;
+    const wsUrl = buildWsUrl(`/ws/chat/${shopId}/`, qs);
+    if (!wsUrl) {
+      console.error('WS error: unable to resolve chat endpoint');
+      return undefined;
+    }
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../utils/AuthContext';
-
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:8000';
+import { API_BASE } from '../data/constants';
+import { buildWsUrl } from '../utils/wsConfig';
 
 const formatRelativeTime = (isoString) => {
   if (!isoString) return '';
@@ -259,10 +259,12 @@ const ChatWidget = () => {
     if (!user) return;
     const token = localStorage.getItem('access_token');
     if (!token) return;
-
-    const rawHost = API_BASE.replace(/^https?:\/\//, '');
-    const protocol = API_BASE.startsWith('https') ? 'wss' : 'ws';
-    const ws = new WebSocket(`${protocol}://${rawHost}/ws/notifications/?token=${token}`);
+    const wsUrl = buildWsUrl('/ws/notifications/', { token });
+    if (!wsUrl) {
+      console.error('Notification WS error: unable to resolve WebSocket endpoint.');
+      return undefined;
+    }
+    const ws = new WebSocket(wsUrl);
     notificationSocketRef.current = ws;
 
     ws.onmessage = (event) => {
@@ -457,12 +459,15 @@ const ChatPopup = ({ conversation, onClose, isSeller, counterpartName, onIncomin
     if (!conversation || !shopId || !buyerParam || !user) return;
 
     const token = localStorage.getItem('access_token') || '';
-    const raw = API_BASE.replace(/^https?:\/\//, '');
-    const wsProtocol = API_BASE.startsWith('https') ? 'wss' : 'ws';
     const qs = new URLSearchParams({ token, buyer: buyerParam });
     if (conversation.productId) qs.set('product', conversation.productId);
 
-    const wsUrl = `${wsProtocol}://${raw}/ws/chat/${shopId}/?${qs.toString()}`;
+    const wsUrl = buildWsUrl(`/ws/chat/${shopId}/`, qs);
+    if (!wsUrl) {
+      console.error('Chat popup WS error: unable to resolve WebSocket endpoint.');
+      setConnecting(false);
+      return undefined;
+    }
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
     setConnecting(true);
@@ -489,7 +494,12 @@ const ChatPopup = ({ conversation, onClose, isSeller, counterpartName, onIncomin
         console.error('WS parse error', error);
       }
     };
-    ws.onclose = (evt) => console.log('Chat popup WS closed', evt);
+    ws.onclose = (evt) => {
+      if (wsRef.current === ws) {
+        setConnecting(false);
+      }
+      console.log('Chat popup WS closed', evt);
+    };
     ws.onerror = (error) => console.error('Chat popup WS error', error);
 
     return () => ws.close();

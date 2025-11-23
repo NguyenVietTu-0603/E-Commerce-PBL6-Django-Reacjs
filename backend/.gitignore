@@ -28,3 +28,4 @@ lib/
 .vscode/
 .idea/
 *.swp
+tests.py

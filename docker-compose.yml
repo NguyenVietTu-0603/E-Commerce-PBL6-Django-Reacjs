@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend
+    volumes:
+      - ./backend:/app
+    expose:
+      - "8000"
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_SETTINGS_MODULE: backend.settings
+      DJANGO_DEBUG: 0
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_BASE: ""   # relative path /api sẽ được sử dụng
+    container_name: frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
