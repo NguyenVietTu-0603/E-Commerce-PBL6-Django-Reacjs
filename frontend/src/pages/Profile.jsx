@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
+  loadLocations,
   getCities, 
   getDistrictsByCity, 
   getWardsByDistrict,
@@ -64,8 +65,8 @@ const Profile = () => {
       });
     }
 
-    // Load cities from mock data
-    setCities(getCities());
+    // Load cities from remote API (locationsData provides loadLocations promise)
+    loadLocations().then(() => setCities(getCities())).catch(() => setCities(getCities()));
   }, [user]);
 
   useEffect(() => {
