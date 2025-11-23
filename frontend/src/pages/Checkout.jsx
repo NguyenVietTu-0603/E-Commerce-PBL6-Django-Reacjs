@@ -169,41 +169,58 @@ export default function Checkout() {
       };
 
       const token = localStorage.getItem("access_token");
-      const headers = {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
 
-      if (formData.paymentMethod === "vnpay") {
-        // 1) Create order first
-        const created = await safeFetchJSON(`${API_BASE}/api/orders/`, {
+      if (token) {
+        // Logged-in user: use cart checkout endpoint which creates order from server-side cart
+        const checkoutPayload = {
+          full_name: formData.fullName,
+          phone: formData.phone,
+          email: formData.email,
+          address: formData.address,
+          ward: formData.ward,
+          district: formData.district,
+          city: formData.city,
+          payment_method: formData.paymentMethod,
+          notes: formData.notes,
+        };
+
+        const created = await safeFetchJSON(`${API_BASE}/api/cart/checkout/`, {
           method: "POST",
           headers,
-          body: JSON.stringify(orderData),
+          body: JSON.stringify(checkoutPayload),
         });
+
         if (!created?.success || !created?.order?.order_id) {
           throw new Error(created?.message || "Không tạo được đơn hàng");
         }
-        const orderId = created.order.order_id;
-        const amount = Math.round(
-          Number(created.order.total_amount ?? totalAmount)
-        );
 
-        // 2) Request VNPay payment link with order_id + amount
-        const pay = await safeFetchJSON(`${API_BASE}/api/payment/vnpay/`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ order_id: orderId, amount: created.order.total_amount }),
-        });
-        if (pay?.payment_url) {
-          // Clear cart after successful callback, not here
-          window.location.href = pay.payment_url;
-          return;
+        const orderId = created.order.order_id;
+        const amount = Math.round(Number(created.order.total_amount ?? totalAmount));
+
+        if (formData.paymentMethod === "vnpay") {
+          // request VNPay link
+          const pay = await safeFetchJSON(`${API_BASE}/api/payment/vnpay/`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ order_id: orderId, amount: created.order.total_amount }),
+          });
+          if (pay?.payment_url) {
+            // Redirect to payment gateway
+            window.location.href = pay.payment_url;
+            return;
+          }
+          throw new Error(pay?.message || "Không tạo được liên kết VNPay.");
         }
-        throw new Error(pay?.message || "Không tạo được liên kết VNPay.");
+
+        // COD / other non-redirect methods
+        clearCart();
+        navigate("/order-success", { state: { orderId } });
+        return;
       }
 
-      // COD or other methods
+      // Guest checkout (no token) — use existing /api/orders/ endpoint and send items
       const result = await safeFetchJSON(`${API_BASE}/api/orders/`, {
         method: "POST",
         headers,
