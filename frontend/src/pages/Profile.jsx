@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -46,7 +46,7 @@ const Profile = () => {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState('');
 
-  const avatarSrc = useMemo(() => resolveAvatarUrl(user, '/default-avatar.png'), [user]);
+  const avatarSrc = resolveAvatarUrl(user, '/default-avatar.png');
 
   usePageTitle('Hồ sơ của tôi');
 
@@ -259,20 +259,6 @@ const Profile = () => {
       )}
 
       <div className="form-section">
-        <h3>Ảnh đại diện</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <img
-            src={avatarSrc}
-            alt={formData.full_name || user?.username || 'avatar'}
-            style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', border: '2px solid #eee' }}
-          />
-          <p style={{ color: '#6b7280', fontSize: 14 }}>
-            Ảnh đại diện được đồng bộ ở mọi nơi. Cập nhật avatar tại mục thông tin tài khoản trong tương lai.
-          </p>
-        </div>
-      </div>
-
-      <div className="form-section">
         <h3>Thông tin cá nhân</h3>
         <div className="form-row">
           <div className="form-group">
@@ -433,63 +419,67 @@ const Profile = () => {
     return (
       <div className="orders-list">
         {orders.map(o => {
-          const createdDate = new Date(o.created_at);
+          const createdDate = o.created_at ? new Date(o.created_at) : null;
           const itemsPreview = o.items?.slice(0, 3) || [];
           const remainingItems = Math.max((o.items?.length || 0) - itemsPreview.length, 0);
-          const paymentLabel = o.payment_method === 'cod' ? 'Thanh toán COD' : (o.payment_method || 'Khác');
 
           return (
             <div key={o.order_id} className="order-card">
-              <div className="order-card-header">
-                <div className="order-code">
-                  <span>Mã đơn</span>
-                  <p>#{o.order_id}</p>
+              <div className="order-card-top">
+                <div className="order-left">
+                  <div className="order-code">
+                    <span>Mã đơn</span>
+                    <p>#{o.order_id}</p>
+                  </div>
+                  <div className="order-date">
+                    {createdDate ? (
+                      <>
+                        <div className="date">{createdDate.toLocaleDateString('vi-VN')}</div>
+                        <div className="time">{createdDate.toLocaleTimeString('vi-VN')}</div>
+                      </>
+                    ) : (
+                      <div className="date">Không rõ</div>
+                    )}
+                  </div>
                 </div>
-                <span className={`order-status-pill status-${o.status}`}>
-                  {statusMap[o.status] || o.status}
-                </span>
+
+                <div className="order-right">
+                  <div className={`order-status-pill status-${o.status}`}>{statusMap[o.status] || o.status}</div>
+                  <div className="order-total">{formatPrice(o.total_amount)}</div>
+                  <div className="order-payment">
+                    {o.payment_method === 'cod'
+                      ? 'Thanh toán COD'
+                      : (o.payment_method || 'Khác')}
+                  </div>
+                </div>
               </div>
 
-              <div className="order-card-meta">
-                <div className="meta-block">
-                  <p>Ngày đặt</p>
-                  <strong>
-                    {createdDate.toLocaleDateString('vi-VN')}<br />
-                    <span>{createdDate.toLocaleTimeString('vi-VN')}</span>
-                  </strong>
-                </div>
-                <div className="meta-block">
-                  <p>Thanh toán</p>
-                  <strong>{paymentLabel}</strong>
-                </div>
-                <div className="meta-block">
-                  <p>Tổng tiền</p>
-                  <strong>{formatPrice(o.total_amount)}</strong>
-                </div>
-              </div>
-
-              <div className="order-items-preview">
+              <div className="order-items-grid">
                 {itemsPreview.map((it, idx) => {
-                  const productName =
-                    typeof it.product === 'string'
-                      ? it.product
-                      : it.product?.name || `Sản phẩm ${idx + 1}`;
+                  const product = it.product && typeof it.product === 'object' ? it.product : null;
+                  const productName = product?.name || (typeof it.product === 'string' ? it.product : `Sản phẩm ${idx + 1}`);
+                  const thumbnail = product?.image || product?.thumbnail || it.thumbnail || null;
                   const linePrice = (Number(it.price) || 0) * (Number(it.quantity) || 0);
 
                   return (
-                    <div key={idx} className="order-item-chip">
-                      <div>
-                        <p>{productName}</p>
-                        <span>SL {it.quantity}</span>
+                    <div key={idx} className="order-item-grid">
+                      <div className="order-thumb">
+                        {thumbnail ? (
+                          <img src={thumbnail} alt={productName} />
+                        ) : (
+                          <div className="thumb-fallback">{(productName || '?').charAt(0)}</div>
+                        )}
                       </div>
-                      <span>{formatPrice(linePrice)}</span>
+                      <div className="order-item-info">
+                        <div className="name">{productName}</div>
+                        <div className="meta">SL {it.quantity} · {formatPrice(linePrice)}</div>
+                      </div>
                     </div>
                   );
                 })}
+
                 {remainingItems > 0 && (
-                  <div className="order-items-more">
-                    +{remainingItems} sản phẩm khác
-                  </div>
+                  <div className="order-items-more">+{remainingItems} sản phẩm khác</div>
                 )}
               </div>
 
@@ -498,12 +488,10 @@ const Profile = () => {
                   <span>Giao đến</span>
                   <p>{o.shipping_address || o.delivery_address || 'Đang cập nhật'}</p>
                 </div>
-                <button
-                  onClick={() => navigate(`/orders/${o.order_id}`)}
-                  className="order-detail-btn"
-                >
-                  Xem chi tiết
-                </button>
+                <div className="order-actions">
+                  <button onClick={() => navigate(`/orders/${o.order_id}`)} className="order-detail-btn">Xem chi tiết</button>
+                  <button onClick={() => navigate(`/orders/${o.order_id}/track`)} className="order-track-btn">Theo dõi</button>
+                </div>
               </div>
             </div>
           );
@@ -514,89 +502,52 @@ const Profile = () => {
 
 
   return (
-    <div className="user-profile-page">
-      <div className="profile-container">
-        <aside className="profile-sidebar">
-          <div className="user-info">
-            <div className="avatar">
-              {user?.avatar ? (
-                <img src={user.avatar} alt={user.full_name} />
-              ) : (
-                <div className="avatar-placeholder">
-                  {user?.full_name?.charAt(0) || user?.username?.charAt(0) || '?'}
-                </div>
-              )}
-            </div>
-            <h3>{user?.full_name || user?.username}</h3>
-            <p>{user?.email}</p>
-            <p className="member-since">
-              Thành viên từ {new Date(user?.date_joined).toLocaleDateString('vi-VN')}
-            </p>
-          </div>
-
-          <nav className="profile-nav">
-            <button
-              className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-              onClick={() => setActiveTab('profile')}
-            >
-              Thông tin cá nhân
-            </button>
-            <button
-              className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`}
-              onClick={() => setActiveTab('orders')}
-            >
-              Đơn hàng của tôi
-            </button>
-            <button
-              className="nav-item"
-              onClick={() => navigate('/change-password')}
-            >
-              Đổi mật khẩu
-            </button>
-          </nav>
-        </aside>
-
-        <main className="profile-content">
-          <div className="tab-header">
-            <h2>
-              {activeTab === 'profile' && 'Thông tin cá nhân'}
-              {activeTab === 'orders' && 'Đơn hàng của tôi'}
-            </h2>
-            
-            {activeTab === 'profile' && (
-              <div className="edit-actions">
-                {isEditing ? (
-                  <>
-                    <button 
-                      className="save-btn"
-                      onClick={handleSubmit}
-                      disabled={loading}
-                    >
-                      {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
-                    </button>
-                    <button 
-                      className="cancel-btn"
-                      onClick={handleCancel}
-                      disabled={loading}
-                    >
-                      Hủy
-                    </button>
-                  </>
-                ) : (
-                  <button 
-                    className="edit-btn"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    Chỉnh sửa
-                  </button>
-                )}
+    <div className="user-profile-page new-layout">
+      <div className="profile-card">
+        <div className="profile-header">
+          <div className="header-banner" />
+          <div className="profile-avatar">
+            {avatarSrc ? (
+              <img src={avatarSrc} alt={user?.full_name || user?.username || 'avatar'} />
+            ) : (
+              <div className="avatar-placeholder">
+                {user?.full_name?.charAt(0) || user?.username?.charAt(0) || '?'}
               </div>
             )}
           </div>
 
-          {activeTab === 'profile' && renderProfileTab()}
-          {activeTab === 'orders' && renderOrdersTab()}
-        </main>
+          <div className="profile-basic">
+            <h3>{user?.full_name || user?.username}</h3>
+            <p className="email">{user?.email}</p>
+            <p className="member-since">Thành viên từ {new Date(user?.date_joined).toLocaleDateString('vi-VN')}</p>
+          </div>
+
+          <div className="profile-actions">
+            {activeTab === 'profile' && (
+              isEditing ? (
+                <>
+                  <button className="save-btn" onClick={handleSubmit} disabled={loading}>{loading ? 'Đang lưu...' : 'Lưu'}</button>
+                  <button className="cancel-btn" onClick={handleCancel} disabled={loading}>Hủy</button>
+                </>
+              ) : (
+                <button className="edit-btn" onClick={() => setIsEditing(true)}>Chỉnh sửa</button>
+              )
+            )}
+            <button className="change-pass" onClick={() => navigate('/change-password')}>Đổi mật khẩu</button>
+          </div>
+        </div>
+
+        <div className="profile-body">
+          <div className="tab-controls">
+            <button className={`tab-btn ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>Thông tin</button>
+            <button className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')}>Đơn hàng</button>
+          </div>
+
+          <div className="tab-panel">
+            {activeTab === 'profile' && renderProfileTab()}
+            {activeTab === 'orders' && renderOrdersTab()}
+          </div>
+        </div>
       </div>
     </div>
   );
