@@ -71,31 +71,31 @@ export default function Chat() {
   if (!user) return null;
 
   return (
-    <div style={{ maxWidth: 900, margin: '20px auto', display:'flex', flexDirection:'column', height:'80vh', background:'#fff', border:'1px solid #eee', borderRadius:8 }}>
-      <div style={{ padding:12, borderBottom:'1px solid #eee', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+    <div style={{ maxWidth: 900, margin: '20px auto', display: 'flex', flexDirection: 'column', height: '80vh', background: '#fff', border: '1px solid #eee', borderRadius: 8 }}>
+      <div style={{ padding: 12, borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link to="/">&larr; Trang chủ</Link>
         <strong>Chat với shop #{shopId}</strong>
       </div>
-      <div style={{ flex:1, overflowY:'auto', padding:12 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
         {messages.map(m => (
-          <div key={m.id} style={{ marginBottom:8, display:'flex', justifyContent: m.sender_id === user?.user_id ? 'flex-end' : 'flex-start' }}>
-            <div style={{ maxWidth:'70%', padding:'8px 12px', borderRadius:12, background: m.sender_id === user?.user_id ? '#DCFCE7' : '#F3F4F6' }}>
-              <div style={{ fontSize:14 }}>{m.content}</div>
-              <div style={{ fontSize:11, color:'#6b7280', marginTop:4 }}>{new Date(m.created_at).toLocaleString('vi-VN')}</div>
+          <div key={m.id} style={{ marginBottom: 8, display: 'flex', justifyContent: m.sender_id === user?.user_id ? 'flex-end' : 'flex-start' }}>
+            <div style={{ maxWidth: '70%', padding: '8px 12px', borderRadius: 12, background: m.sender_id === user?.user_id ? '#DCFCE7' : '#F3F4F6' }}>
+              <div style={{ fontSize: 14 }}>{m.content}</div>
+              <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>{new Date(m.created_at).toLocaleString('vi-VN')}</div>
             </div>
           </div>
         ))}
         <div ref={bottomRef} />
       </div>
-      <div style={{ padding:12, display:'flex', gap:8, borderTop:'1px solid #eee' }}>
+      <div style={{ padding: 12, display: 'flex', gap: 8, borderTop: '1px solid #eee' }}>
         <input
           value={text}
           onChange={e => setText(e.target.value)}
-          onKeyDown={e => e.key==='Enter' && sendMessage()}
+          onKeyDown={e => e.key === 'Enter' && sendMessage()}
           placeholder="Nhập nội dung..."
-          style={{ flex:1, padding:'10px 12px', border:'1px solid #ddd', borderRadius:8 }}
+          style={{ flex: 1, padding: '10px 12px', border: '1px solid #ddd', borderRadius: 8 }}
         />
-        <button onClick={sendMessage} style={{ padding:'10px 16px', background:'#2563eb', color:'#fff', border:'none', borderRadius:8 }}>Gửi</button>
+        <button onClick={sendMessage} style={{ padding: '10px 16px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8 }}>Gửi</button>
       </div>
     </div>
   );
