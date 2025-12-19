@@ -202,7 +202,6 @@ export default function Checkout() {
           }
 
           const orderId = created.order.order_id;
-          const amount = Math.round(Number(created.order.total_amount ?? totalAmount));
 
           if (formData.paymentMethod === "vnpay") {
             // request VNPay link
