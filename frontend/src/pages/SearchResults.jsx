@@ -14,10 +14,12 @@ export default function SearchResults() {
   const qs = useQuery();
   const mode = qs.get('mode') || 'text';
   const q = (qs.get('q') || '').trim();
+  const category = qs.get('category') || '';
 
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
+  const [imageSearchData, setImageSearchData] = useState(null);
 
   const title = mode === 'image'
     ? 'Kết quả tìm kiếm bằng ảnh'
@@ -31,8 +33,15 @@ export default function SearchResults() {
       try {
         if (mode === 'image') {
           const cached = sessionStorage.getItem('imageSearchResults');
-          const arr = cached ? JSON.parse(cached) : [];
-          if (!cancelled) setResults(Array.isArray(arr) ? arr : []);
+          if (cached) {
+            const data = JSON.parse(cached);
+            if (!cancelled) {
+              setImageSearchData(data);
+              setResults(Array.isArray(data.products) ? data.products : []);
+            }
+          } else {
+            if (!cancelled) setResults([]);
+          }
         } else {
           if (!q) { setResults([]); return; }
           const res = await fetch(`http://localhost:8000/api/products/?search=${encodeURIComponent(q)}`);
@@ -58,6 +67,14 @@ export default function SearchResults() {
       <div className="search-results-container">
         <div className="search-header">
           <h1>Kết quả tìm kiếm {mode === 'image' ? '(Ảnh)' : ''}</h1>
+          {mode === 'image' && imageSearchData && (
+            <div className="image-search-info">
+              <p className="detected-category">
+                🎯 Phát hiện: <strong>{imageSearchData.predictedClass || imageSearchData.category}</strong>
+              </p>
+              <p className="category-desc">Hiển thị sản phẩm trong danh mục này</p>
+            </div>
+          )}
           {mode !== 'image' && (
             <div className="search-query">Từ khóa: <strong>{q || '(trống)'}</strong></div>
           )}

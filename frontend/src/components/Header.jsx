@@ -80,14 +80,14 @@ export default function Header({
     else window.location.href = '/';
   }
 
-  function handleImageResults(results) {
+  function handleImageResults(data) {
     try {
       if (onImageSearchResults) {
-        onImageSearchResults(results);
+        onImageSearchResults(data);
       } else {
         // Lưu tạm để trang /search đọc và hiển thị
-        sessionStorage.setItem('imageSearchResults', JSON.stringify(results));
-        navigate('/search?mode=image');
+        sessionStorage.setItem('imageSearchResults', JSON.stringify(data));
+        navigate(`/search?mode=image&category=${encodeURIComponent(data.category || '')}`);
       }
     } catch (e) {
       console.error(e);
@@ -132,11 +132,10 @@ export default function Header({
                 label={imgSearchLoading ? (
                   <>
                     <Icon name="spinner" size={14} className="fa-spin" />
-                    <span>Đang tìm...</span>
+                    <span>Đang phân tích...</span>
                   </>
                 ) : 'Tìm bằng ảnh'}
                 icon={imgSearchLoading ? null : 'image'}
-                k={48}
                 onStart={() => { setImgSearchLoading(true); setImgSearchError(null); }}
                 onFinish={() => setImgSearchLoading(false)}
                 onResults={handleImageResults}
