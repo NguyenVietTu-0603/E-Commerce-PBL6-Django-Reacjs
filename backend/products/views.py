@@ -7,7 +7,6 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from django.db.models import Count, Q
 from PIL import Image
-import numpy as np
 
 from .serializers import (
     ProductCreateSerializer,
@@ -17,7 +16,7 @@ from .serializers import (
     SavedItemSerializer,
 )
 from .models import Product, Category, WishlistItem, SavedItem
-from clip_service import embed_pil  # nếu bạn dùng embedding image
+from resnet_service import classify_image
 
 
 class BuyerOnlyPermission(permissions.BasePermission):
@@ -116,46 +115,98 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class ImageSearchView(APIView):
+    """
+    Tìm kiếm sản phẩm bằng ảnh sử dụng ResNet classification
+    
+    POST /api/search/image/
+    - Nhận file ảnh
+    - Classify ảnh thành 1 trong 18 class
+    - Trả về các sản phẩm trong category tương ứng
+    """
     parser_classes = [MultiPartParser]
+    permission_classes = [AllowAny]
 
     def post(self, request):
-        k = int(request.GET.get("k", 12))
         file = request.FILES.get("file")
         if not file:
-            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "No file uploaded"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             img = Image.open(file).convert("RGB")
         except Exception as e:
-            return Response({"error": f"Cannot open image: {e}"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": f"Cannot open image: {e}"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
-            q = embed_pil(img).numpy()  # (D,)
-        finally:
-            try: img.close()
-            except Exception: pass
-
-        prods_qs = Product.objects.exclude(image_embedding__isnull=True).exclude(image_embedding__exact=[])
-        prods = list(prods_qs)
-        if not prods:
-            return Response({"results": []})
-
-        embs = np.array([p.image_embedding for p in prods], dtype=np.float32)
-        q = q / (np.linalg.norm(q) + 1e-12)
-        sims = embs @ q
-
-        top_idx = np.argsort(-sims)[:k]
-        results = []
-        for idx in top_idx:
-            p = prods[int(idx)]
-            results.append({
-                "id": p.id,
-                "name": p.name,
-                "price": str(p.price),
-                "image": (p.image.url if p.image else (p.image_url or None)),
-                "similarity": float(sims[int(idx)]),
+            # Phân loại ảnh
+            predicted_class = classify_image(img)
+            
+            # Tìm sản phẩm có category tương ứng
+            # Chuyển đổi class name thành category name (ví dụ: 'backpack' -> 'Backpack')
+            category_name = predicted_class.capitalize()
+            
+            # Tìm category
+            category = Category.objects.filter(name__iexact=category_name).first()
+            
+            if category:
+                # Lấy sản phẩm trong category này
+                products = Product.objects.filter(
+                    category=category,
+                    is_active=True
+                ).select_related('seller', 'category')[:50]  # Giới hạn 50 sản phẩm
+                
+                results = []
+                for p in products:
+                    results.append({
+                        "id": p.id,
+                        "name": p.name,
+                        "price": str(p.price),
+                        "image": (p.image.url if p.image else (p.image_url or None)),
+                        "category": category_name,
+                        "seller": p.seller.username if p.seller else None,
+                    })
+            else:
+                # Nếu không tìm thấy category chính xác, tìm gần đúng
+                products = Product.objects.filter(
+                    Q(name__icontains=predicted_class) | 
+                    Q(description__icontains=predicted_class),
+                    is_active=True
+                ).select_related('seller', 'category')[:50]
+                
+                results = []
+                for p in products:
+                    results.append({
+                        "id": p.id,
+                        "name": p.name,
+                        "price": str(p.price),
+                        "image": (p.image.url if p.image else (p.image_url or None)),
+                        "category": p.category.name if p.category else None,
+                        "seller": p.seller.username if p.seller else None,
+                    })
+            
+            return Response({
+                "predicted_class": predicted_class,
+                "category": category_name,
+                "total_results": len(results),
+                "results": results
             })
-        return Response({"results": results})
+            
+        except Exception as e:
+            return Response(
+                {"error": f"Classification failed: {str(e)}"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        finally:
+            try:
+                img.close()
+            except Exception:
+                pass
+
 
 class WishlistViewSet(mixins.ListModelMixin,
                       mixins.CreateModelMixin,

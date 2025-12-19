@@ -9,12 +9,13 @@ django-extensions>=3.2,<4.2
 django-jazzmin>=3.0,<3.1
 gunicorn>=22.1.0
 Pillow>=10.0,<11.0
-numpy==1.26.4   
+numpy>=1.26.4
 ftfy
 regex
 sentencepiece
-torch==2.2.2+cpu
-transformers==4.41.2
+torch>=2.2.0
+torchvision>=0.17.0
+transformers>=4.41.0
 pytest>=8.3,<9.0
 pytest-django>=4.8,<5.0
 pytest-mock>=3.14,<4.0
