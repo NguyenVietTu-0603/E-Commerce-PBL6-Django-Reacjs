@@ -434,9 +434,17 @@ class ProfileView(generics.RetrieveUpdateAPIView):
             status=status.HTTP_200_OK,
         )
     
-    # Note: update is implemented above to handle updating both User and Profile.
-    # The simpler serializer-based update was removed to ensure full_name/phone
-    # are updated together with nested profile data.
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        return Response({
+            'profile': serializer.data,
+            'message': 'Profile updated successfully'
+        })
 
 
 # ==================== STATISTICS VIEWS (Admin) ====================
