@@ -38,3 +38,20 @@ inspect_docs.py
 pytest.ini
 run_pytest.py
 test_report_utils.py
+
+# ------------------------
+# Database (SQLite)
+# ------------------------
+db.sqlite3
+backend/db.sqlite3
+
+# ------------------------
+# Frontend cache
+# ------------------------
+frontend/node_modules/.cache/
+.cache/
+
+# ------------------------
+# Env
+# ------------------------
+.env
