@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE } from '../data/constants';
 import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import Loading from '../components/Loading';
@@ -15,7 +16,7 @@ export default function Home() {
 
   useEffect(() => {
     // Fetch products
-    fetch('http://localhost:8000/api/products/')
+    fetch(`${API_BASE}/api/products/`)
       .then(res => res.json())
       .then(data => {
         setProducts(data.slice(0, 20));
@@ -23,7 +24,7 @@ export default function Home() {
       .catch(err => console.error('Error loading products:', err));
 
     // Fetch categories
-    fetch('http://localhost:8000/api/categories/')
+    fetch(`${API_BASE}/api/categories/`)
       .then(res => res.json())
       .then(data => {
         const items = Array.isArray(data) ? data : (data.results || []);

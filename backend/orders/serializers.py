@@ -139,3 +139,15 @@ class OrderListSerializer(serializers.ModelSerializer):
         if obj.user:
             return getattr(obj.user, 'full_name', None) or obj.user.username
         return obj.full_name
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    """Full serializer for OrderItem admin CRUD"""
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    order_id_display = serializers.CharField(source='order.order_id', read_only=True)
+    
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'order', 'order_id_display', 'product', 'product_name', 
+                  'quantity', 'price', 'color', 'size']
+        read_only_fields = ['id']

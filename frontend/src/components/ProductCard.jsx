@@ -2,9 +2,25 @@ import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../utils/CartContext';
 import { useWishlist } from '../utils/WishlistContext';
+import { API_BASE } from '../data/constants';
 import '../assets/ProductCard.css';  // Thêm import CSS cho thẻ sản phẩm
 import Icon from './Icon';
 import flyToCart from '../utils/flyToCart';
+
+// Helper function to normalize image URL
+const normalizeImageUrl = (imageUrl) => {
+  if (!imageUrl) return '/default-product.png';
+  
+  // If already absolute URL (http/https), return as is
+  if (/^https?:\/\//i.test(imageUrl)) return imageUrl;
+  
+  // If data URL, return as is
+  if (/^data:/i.test(imageUrl)) return imageUrl;
+  
+  // If relative path, prepend API_BASE
+  const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+  return `${API_BASE}${path}`;
+};
 
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
@@ -22,7 +38,8 @@ export default function ProductCard({ product }) {
       : product.category?.name ?? product.category?.title ?? '';
 
   const defaultImage = '/default-product.png';
-  const imgSrc = product.image || product.image_url || '/default-product.png';
+  const rawImageSrc = product.image || product.image_url || null;
+  const imgSrc = normalizeImageUrl(rawImageSrc);
 
   const handleAddToCart = (e) => {
     e.preventDefault();

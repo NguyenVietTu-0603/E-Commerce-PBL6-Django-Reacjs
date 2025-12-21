@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../utils/AuthContext";
 import authService from "../utils/authService";
 import '../assets/authPages.css'
 
@@ -11,6 +12,7 @@ export default function AuthModal({
   onRegisterSuccess = () => { },
 }) {
   const navigate = useNavigate();
+  const { updateUser } = useAuth();
 
   const [mode, setMode] = useState(initialMode);
   const [loading, setLoading] = useState(false);
@@ -20,6 +22,9 @@ export default function AuthModal({
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [userType, setUserType] = useState("buyer");
 
   useEffect(() => {
@@ -31,6 +36,9 @@ export default function AuthModal({
       setUsername("");
       setEmail("");
       setPassword("");
+      setPasswordConfirm("");
+      setFullName("");
+      setPhone("");
       setUserType("buyer");
     }
   }, [initialMode, open]);
@@ -39,16 +47,23 @@ export default function AuthModal({
 
   // Map user_type -> redirect path. Edit mapping if you need different routes.
   const getRedirectForRole = (role) => {
-    switch ((role || "").toString().toLowerCase()) {
-      case "seller":
-        return "/seller/dashboard";
-      case "buyer":
-        return "/";
-      case "admin":
-        return "/admin/dashboard";
-      default:
-        return "/dashboard";
+    // For login, redirect to appropriate dashboard
+    if (mode === "login") {
+      switch ((role || "").toString().toLowerCase()) {
+        case "admin":
+          return "/admin/dashboard";
+        case "seller":
+          return "/seller/dashboard";
+        case "buyer":
+          return "/";
+        default:
+          return "/";
+      }
     }
+    
+    // For register, always redirect to profile page
+    // Seller goes to profile to set up shop info, buyer goes to complete personal info
+    return "/profile";
   };
 
   async function handleSubmit(e) {
@@ -65,14 +80,45 @@ export default function AuthModal({
         data = await authService.login(username || email, password);
         user = data?.user ?? data;
       } else {
-        const payload = { username, email, password, user_type: userType };
+        // Validate register fields
+        if (!username || !email || !password) {
+          setError("Vui lòng điền đầy đủ thông tin bắt buộc");
+          setLoading(false);
+          return;
+        }
+        
+        if (password !== passwordConfirm) {
+          setError("Mật khẩu xác nhận không khớp");
+          setLoading(false);
+          return;
+        }
+
+        if (password.length < 8) {
+          setError("Mật khẩu phải có ít nhất 8 ký tự");
+          setLoading(false);
+          return;
+        }
+
+        const payload = { 
+          username, 
+          email, 
+          password, 
+          password_confirm: passwordConfirm,
+          full_name: fullName,
+          phone: phone,
+          user_type: userType 
+        };
         data = await authService.register(payload);
         user = data?.user ?? data;
       }
 
-      // persist user
+      // persist user và update AuthContext
       try {
-        if (user) localStorage.setItem("user", JSON.stringify(user));
+        if (user) {
+          localStorage.setItem("user", JSON.stringify(user));
+          // Update AuthContext để user được set ngay lập tức
+          if (updateUser) updateUser(user);
+        }
       } catch { }
 
       // callback cho parent
@@ -87,7 +133,14 @@ export default function AuthModal({
       // redirect tự động theo role
       const role = user?.user_type ?? user?.role ?? null;
       const redirectPath = getRedirectForRole(role);
-      if (redirectPath) navigate(redirectPath);
+      if (redirectPath) {
+        // Sử dụng setTimeout để đảm bảo state được update trước khi redirect
+        setTimeout(() => {
+          navigate(redirectPath);
+          // Force reload to ensure all contexts are updated
+          window.location.href = redirectPath;
+        }, 150);
+      }
 
     } catch (err) {
       setLoading(false);
@@ -138,15 +191,60 @@ export default function AuthModal({
           {mode === "register" && (
             <>
               <label>
-                Tên đăng nhập
-                <input value={username} onChange={(e) => setUsername(e.target.value)} />
+                Tên đăng nhập *
+                <input 
+                  value={username} 
+                  onChange={(e) => setUsername(e.target.value)} 
+                  required
+                  minLength={3}
+                />
               </label>
               <label>
-                Email
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                Email *
+                <input 
+                  type="email" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  required
+                />
               </label>
               <label>
-                Loại tài khoản
+                Mật khẩu *
+                <input 
+                  type="password" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  required
+                  minLength={8}
+                />
+              </label>
+              <label>
+                Xác nhận mật khẩu *
+                <input 
+                  type="password" 
+                  value={passwordConfirm} 
+                  onChange={(e) => setPasswordConfirm(e.target.value)} 
+                  required
+                />
+              </label>
+              <label>
+                Họ và tên
+                <input 
+                  value={fullName} 
+                  onChange={(e) => setFullName(e.target.value)} 
+                />
+              </label>
+              <label>
+                Số điện thoại
+                <input 
+                  type="tel" 
+                  value={phone} 
+                  onChange={(e) => setPhone(e.target.value)} 
+                  placeholder="+84912345678"
+                />
+              </label>
+              <label>
+                Loại tài khoản *
                 <select value={userType} onChange={(e) => setUserType(e.target.value)}>
                   <option value="buyer">Buyer</option>
                   <option value="seller">Seller</option>
@@ -158,16 +256,24 @@ export default function AuthModal({
           {mode === "login" && (
             <>
               <label>
-                Email hoặc username
-                <input value={username} onChange={(e) => setUsername(e.target.value)} />
+                Tên đăng nhập hoặc Email *
+                <input 
+                  value={username} 
+                  onChange={(e) => setUsername(e.target.value)} 
+                  required
+                />
+              </label>
+              <label>
+                Mật khẩu *
+                <input 
+                  type="password" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  required
+                />
               </label>
             </>
           )}
-
-          <label>
-            Mật khẩu
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          </label>
 
           {error && <div className="auth-error" role="alert">{String(error)}</div>}
 

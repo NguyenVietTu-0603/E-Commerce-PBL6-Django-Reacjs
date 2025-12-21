@@ -3,6 +3,18 @@ from .models import CartItem
 from products.models import Product
 
 
+class CartItemAdminSerializer(serializers.ModelSerializer):
+    """Simple serializer for admin CRUD"""
+    username = serializers.CharField(source='user.username', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    
+    class Meta:
+        model = CartItem
+        fields = ['id', 'user', 'username', 'product', 'product_name', 
+                  'quantity', 'color', 'size', 'added_at', 'updated_at']
+        read_only_fields = ['id', 'username', 'product_name', 'added_at', 'updated_at']
+
+
 class CartItemCreateSerializer(serializers.Serializer):
     product_id = serializers.IntegerField()
     quantity = serializers.IntegerField(default=1)

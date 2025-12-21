@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { API_BASE } from '../data/constants';
 import ProductGrid from '../components/ProductGrid';
 import Loading from '../components/Loading';
 import '../assets/SearchResults.css';
@@ -14,7 +15,6 @@ export default function SearchResults() {
   const qs = useQuery();
   const mode = qs.get('mode') || 'text';
   const q = (qs.get('q') || '').trim();
-  const category = qs.get('category') || '';
 
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +44,7 @@ export default function SearchResults() {
           }
         } else {
           if (!q) { setResults([]); return; }
-          const res = await fetch(`http://localhost:8000/api/products/?search=${encodeURIComponent(q)}`);
+          const res = await fetch(`${API_BASE}/api/products/?search=${encodeURIComponent(q)}`);
           const data = await res.json();
           if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
           const items = Array.isArray(data) ? data : (data.results || []);

@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { API_BASE } from '../data/constants';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faPhone, faEnvelope, faMapMarkerAlt, faTimesCircle 
+} from '@fortawesome/free-solid-svg-icons';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ProductCard from '../components/ProductCard';
@@ -45,7 +50,7 @@ const ShopProfile = () => {
       if (priceRange.max) params.append('max_price', priceRange.max);
       
       const response = await fetch(
-        `http://localhost:8000/api/users/shop/${sellerId}/?${params.toString()}`
+        `${API_BASE}/api/users/shop/${sellerId}/?${params.toString()}`
       );
       
       if (!response.ok) {
@@ -101,7 +106,7 @@ const ShopProfile = () => {
     return (
       <>
         <div className="shop-error">
-          <h2>❌ Lỗi</h2>
+          <h2><FontAwesomeIcon icon={faTimesCircle} /> Lỗi</h2>
           <p>{error}</p>
           <Link to="/shops" className="btn btn-primary">Xem tất cả shop</Link>
         </div>
@@ -183,21 +188,21 @@ const ShopProfile = () => {
                   <div className="shop-contact">
                     {shopData.phone && (
                       <div className="contact-item">
-                        <span className="contact-icon">📱</span>
+                        <span className="contact-icon"><FontAwesomeIcon icon={faPhone} /></span>
                         <span>{shopData.phone}</span>
                       </div>
                     )}
                     
                     {shopData.email && (
                       <div className="contact-item">
-                        <span className="contact-icon">📧</span>
+                        <span className="contact-icon"><FontAwesomeIcon icon={faEnvelope} /></span>
                         <span>{shopData.email}</span>
                       </div>
                     )}
                     
                     {(address || city) && (
                       <div className="contact-item">
-                        <span className="contact-icon">📍</span>
+                        <span className="contact-icon"><FontAwesomeIcon icon={faMapMarkerAlt} /></span>
                         <span>{address} {city}</span>
                       </div>
                     )}

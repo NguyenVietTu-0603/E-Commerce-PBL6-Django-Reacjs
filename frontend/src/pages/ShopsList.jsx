@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { API_BASE } from '../data/constants';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import '../assets/ShopsList.css';
@@ -36,7 +37,7 @@ const ShopsList = () => {
       if (sortBy) params.append('sort', sortBy);
       
       const response = await fetch(
-        `http://localhost:8000/api/users/shops/?${params.toString()}`
+        `${API_BASE}/api/users/shops/?${params.toString()}`
       );
       
       if (!response.ok) throw new Error('Failed to fetch shops');

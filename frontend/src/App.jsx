@@ -5,8 +5,6 @@ import { CartProvider } from './utils/CartContext';
 import { WishlistProvider } from './utils/WishlistContext';
 import PrivateRoute from './components/PrivateRoute';
 import Header from './components/Header';
-import Login from './pages/Login';
-import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import SellerDashboard from './pages/SellerDashboard';
@@ -33,6 +31,19 @@ import SellerOrders from './pages/SellerOrders';
 import ShopsList from './pages/ShopsList'; // keep shops
 import ShopProfile from './pages/ShopProfile';
 
+// Component to redirect admin to dashboard automatically
+const HomeOrRedirect = () => {
+  const { user } = useAuth();
+  
+  // If admin is logged in, redirect to admin dashboard
+  if (user && user.user_type === 'admin') {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+  
+  // Otherwise show home page
+  return <Home />;
+};
+
 function App() {
   return (
     <Router>
@@ -41,14 +52,10 @@ function App() {
           <WishlistProvider>
             <div className="App">
               <Header />
-              <Routes>
+                <Routes>
                 {/* ==================== PUBLIC ROUTES ==================== */}
-                <Route index element={<Home />} />
-                <Route path="/" element={<Home />} />
-
-                {/* Auth */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
+                <Route index element={<HomeOrRedirect />} />
+                <Route path="/" element={<HomeOrRedirect />} />
 
                 {/* Category page */}
                 <Route path="/category/:slug" element={<CategoryPage />} />
@@ -208,7 +215,7 @@ function App() {
 
 const RoleBasedRedirect = () => {
   const { user, getDefaultRoute } = useAuth();
-  if (!user) return <Navigate to="/login" />;
+  if (!user) return <Navigate to="/" />;
   return <Navigate to={getDefaultRoute(user.user_type)} />;
 };
 

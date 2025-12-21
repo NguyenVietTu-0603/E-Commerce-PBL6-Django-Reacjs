@@ -424,6 +424,34 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         serializer.save()
 
         profile_instance.refresh_from_db()
+        
+        # Check if profile is completed (all required fields filled)
+        # For sellers: require bio (shop description)
+        if user_instance.user_type == 'seller':
+            is_completed = all([
+                user_instance.full_name,
+                user_instance.phone,
+                profile_instance.bio,  # Required for sellers
+                profile_instance.address,
+                profile_instance.city,
+                profile_instance.district,
+                profile_instance.ward,
+            ])
+        else:
+            # For buyers: bio is optional
+            is_completed = all([
+                user_instance.full_name,
+                user_instance.phone,
+                profile_instance.address,
+                profile_instance.city,
+                profile_instance.district,
+                profile_instance.ward,
+            ])
+        
+        # Update profile_completed flag
+        if is_completed and not user_instance.profile_completed:
+            user_instance.profile_completed = True
+            user_instance.save()
 
         return Response(
             {
@@ -437,6 +465,55 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     # Note: update is implemented above to handle updating both User and Profile.
     # The simpler serializer-based update was removed to ensure full_name/phone
     # are updated together with nested profile data.
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def upload_avatar(request):
+    """
+    API upload avatar
+    
+    POST /api/users/profile/avatar/
+    """
+    try:
+        profile, created = Profile.objects.get_or_create(user=request.user)
+        
+        if 'avatar' not in request.FILES:
+            return Response(
+                {'error': 'No avatar file provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        avatar_file = request.FILES['avatar']
+        
+        # Validate file size (5MB max)
+        if avatar_file.size > 5 * 1024 * 1024:
+            return Response(
+                {'error': 'File size exceeds 5MB limit'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate file type
+        if not avatar_file.content_type.startswith('image/'):
+            return Response(
+                {'error': 'Invalid file type. Only images are allowed'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Save avatar
+        profile.avatar = avatar_file
+        profile.save()
+        
+        return Response({
+            'message': 'Avatar uploaded successfully',
+            'avatar_url': request.build_absolute_uri(profile.avatar.url) if profile.avatar else None
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 # ==================== STATISTICS VIEWS (Admin) ====================

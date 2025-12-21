@@ -30,12 +30,19 @@ const adjustLocalLoopback = (config) => {
 };
 
 export const resolveWsConfig = () => {
+  // 1. Check explicit WebSocket URL
   const explicit = parseWsBase(process.env.REACT_APP_WS_BASE_URL);
   if (explicit) return explicit;
 
+  // 2. Check REACT_APP_API_URL (commonly used for backend URL)
+  const apiUrl = parseWsBase(process.env.REACT_APP_API_URL);
+  if (apiUrl) return apiUrl;
+
+  // 3. Check REACT_APP_API_BASE_URL
   const apiEnv = parseWsBase(process.env.REACT_APP_API_BASE_URL);
   if (apiEnv) return apiEnv;
 
+  // 4. Check API_BASE from constants
   const fromApiBase = adjustLocalLoopback(parseWsBase(API_BASE));
   if (fromApiBase) return fromApiBase;
 

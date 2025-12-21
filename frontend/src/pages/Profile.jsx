@@ -26,6 +26,8 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -134,12 +136,50 @@ const Profile = () => {
     setMessage({ type: '', text: '' });
   };
 
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        setMessage({ type: 'error', text: 'Kích thước ảnh không được vượt quá 5MB' });
+        return;
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        setMessage({ type: 'error', text: 'Vui lòng chọn file ảnh hợp lệ' });
+        return;
+      }
+      
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+      setMessage({ type: '', text: '' });
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage({ type: '', text: '' });
 
     try {
+      // First, upload avatar if changed
+      if (avatarFile) {
+        const avatarFormData = new FormData();
+        avatarFormData.append('avatar', avatarFile);
+
+        const avatarResponse = await fetch(`${API_BASE}/api/users/profile/avatar/`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          },
+          body: avatarFormData
+        });
+
+        if (!avatarResponse.ok) {
+          throw new Error('Tải ảnh đại diện thất bại');
+        }
+      }
+
+      // Then update profile info
       const updateData = {
         full_name: formData.full_name,
         phone: formData.phone,
@@ -208,11 +248,20 @@ const Profile = () => {
         });
       }
       
+      // Clear avatar preview after successful upload
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      
       setMessage({ 
         type: 'success', 
         text: result.message || 'Cập nhật thông tin thành công!' 
       });
       setIsEditing(false);
+      
+      // Reload page to update avatar and profile completion status
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (error) {
       console.error('Update error:', error);
       setMessage({ 
@@ -238,6 +287,8 @@ const Profile = () => {
         country: user.profile?.country || 'Vietnam',
       });
     }
+    setAvatarFile(null);
+    setAvatarPreview(null);
     setIsEditing(false);
     setMessage({ type: '', text: '' });
   };
@@ -252,6 +303,22 @@ const Profile = () => {
 
   const renderProfileTab = () => (
     <div className="profile-form">
+      {!user?.profile_completed && (
+        <div className="alert alert-warning" style={{ marginBottom: '20px' }}>
+          <Icon name="exclamation-triangle" size={18} style={{ marginRight: '8px' }} />
+          <strong>
+            {user?.user_type === 'seller' 
+              ? 'Vui lòng hoàn thành thông tin Shop để tiếp tục bán hàng!' 
+              : 'Vui lòng hoàn thành thông tin cá nhân để tiếp tục sử dụng!'}
+          </strong>
+          <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
+            {user?.user_type === 'seller'
+              ? 'Cần điền đầy đủ: Tên shop (Họ tên), Số điện thoại, Địa chỉ shop (Tỉnh/TP, Quận/Huyện, Phường/Xã, Địa chỉ), Giới thiệu về shop, và Ảnh đại diện shop'
+              : 'Cần điền đầy đủ: Họ tên, Số điện thoại, Địa chỉ chi tiết (Tỉnh/TP, Quận/Huyện, Phường/Xã, Địa chỉ)'}
+          </p>
+        </div>
+      )}
+
       {message.text && (
         <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-error'}`}>
           {message.text}
@@ -259,17 +326,55 @@ const Profile = () => {
       )}
 
       <div className="form-section">
-        <h3>Thông tin cá nhân</h3>
+        <h3>{user?.user_type === 'seller' ? 'Ảnh đại diện Shop' : 'Ảnh đại diện'}</h3>
+        <div className="avatar-upload-section">
+          <div className="avatar-preview">
+            {avatarPreview ? (
+              <img src={avatarPreview} alt="Preview" />
+            ) : avatarSrc ? (
+              <img src={avatarSrc} alt="Current avatar" />
+            ) : (
+              <div className="avatar-placeholder-large">
+                {user?.full_name?.charAt(0) || user?.username?.charAt(0) || '?'}
+              </div>
+            )}
+          </div>
+          {isEditing && (
+            <div className="avatar-upload-controls">
+              <input
+                type="file"
+                id="avatar-input"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                style={{ display: 'none' }}
+              />
+              <label htmlFor="avatar-input" className="upload-avatar-btn">
+                <Icon name="camera" size={16} style={{ marginRight: '8px' }} />
+                Chọn ảnh
+              </label>
+              <p className="upload-hint">
+                {user?.user_type === 'seller' 
+                  ? 'Logo hoặc ảnh đại diện shop. JPG, PNG. Tối đa 5MB' 
+                  : 'JPG, PNG. Tối đa 5MB'}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="form-section">
+        <h3>{user?.user_type === 'seller' ? 'Thông tin Shop' : 'Thông tin cá nhân'}</h3>
         <div className="form-row">
           <div className="form-group">
-            <label>Họ và tên</label>
+            <label>{user?.user_type === 'seller' ? 'Tên Shop *' : 'Họ và tên'}</label>
             {isEditing ? (
               <input
                 type="text"
                 name="full_name"
                 value={formData.full_name}
                 onChange={handleChange}
-                placeholder="Nhập họ và tên"
+                placeholder={user?.user_type === 'seller' ? 'Nhập tên shop' : 'Nhập họ và tên'}
+                required
               />
             ) : (
               <p>{formData.full_name || 'Chưa cập nhật'}</p>
@@ -277,7 +382,7 @@ const Profile = () => {
           </div>
 
           <div className="form-group">
-            <label>Số điện thoại</label>
+            <label>Số điện thoại *</label>
             {isEditing ? (
               <input
                 type="tel"
@@ -285,6 +390,7 @@ const Profile = () => {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="Nhập số điện thoại"
+                required
               />
             ) : (
               <p>{formData.phone || 'Chưa cập nhật'}</p>
@@ -298,23 +404,26 @@ const Profile = () => {
         </div>
 
         <div className="form-group">
-          <label>Giới thiệu</label>
+          <label>{user?.user_type === 'seller' ? 'Giới thiệu về Shop *' : 'Giới thiệu'}</label>
           {isEditing ? (
             <textarea
               name="bio"
               value={formData.bio}
               onChange={handleChange}
-              placeholder="Viết vài dòng về bản thân..."
+              placeholder={user?.user_type === 'seller' 
+                ? 'Viết mô tả về shop của bạn, các sản phẩm chủ yếu, chính sách bán hàng...' 
+                : 'Viết vài dòng về bản thân...'}
               rows="4"
+              required={user?.user_type === 'seller'}
             />
           ) : (
-            <p>{formData.bio || 'Chưa có giới thiệu'}</p>
+            <p>{formData.bio || (user?.user_type === 'seller' ? 'Chưa có mô tả shop' : 'Chưa có giới thiệu')}</p>
           )}
         </div>
       </div>
 
       <div className="form-section">
-        <h3>Địa chỉ</h3>
+        <h3>{user?.user_type === 'seller' ? 'Địa chỉ Shop' : 'Địa chỉ'}</h3>
         
         {isEditing ? (
           <>
