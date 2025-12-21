@@ -32,19 +32,31 @@ import SellerOrders from './pages/SellerOrders';
 import ShopsList from './pages/ShopsList'; // keep shops
 import ShopProfile from './pages/ShopProfile';
 
+// Component to redirect admin to dashboard automatically
+const HomeOrRedirect = () => {
+  const { user } = useAuth();
+  
+  // If admin is logged in, redirect to admin dashboard
+  if (user && user.user_type === 'admin') {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+  
+  // Otherwise show home page
+  return <Home />;
+};
+
 function App() {
   return (
     <Router>
       <AuthProvider>
         <CartProvider>
           <WishlistProvider>
-            <ProfileGuard>
-              <div className="App">
-                <Header />
+            <div className="App">
+              <Header />
                 <Routes>
                 {/* ==================== PUBLIC ROUTES ==================== */}
-                <Route index element={<Home />} />
-                <Route path="/" element={<Home />} />
+                <Route index element={<HomeOrRedirect />} />
+                <Route path="/" element={<HomeOrRedirect />} />
 
                 {/* Category page */}
                 <Route path="/category/:slug" element={<CategoryPage />} />
@@ -195,7 +207,6 @@ function App() {
               </Routes>
               <ChatWidget />
             </div>
-          </ProfileGuard>
           </WishlistProvider>
         </CartProvider>
       </AuthProvider>

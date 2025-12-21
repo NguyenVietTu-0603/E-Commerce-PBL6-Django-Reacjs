@@ -4,13 +4,14 @@ import { Link } from 'react-router-dom';
 import usePageTitle from '../hooks/usePageTitle';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { API_BASE } from '../data/constants';
 import { 
   faChartLine, faUsers, faBoxes, faShoppingCart, faSync,
   faUserPlus, faStore, faMoneyBillWave, faStar, faFire,
   faChartBar, faUserCog, faPlus, faFolder, faEdit, faLock,
   faHourglassHalf, faCreditCard, faTruck, faCheckCircle, faTimesCircle,
-  faSearch, faFilter, faExclamationTriangle, faComments, faEnvelope,
-  faHeart, faBookmark, faUserCircle, faTag
+  faExclamationTriangle, faComments, faEnvelope,
+  faHeart, faBookmark, faUserCircle
 } from '@fortawesome/free-solid-svg-icons';
 import '../assets/AdminDashboard.css';
 import '../assets/AdminCRUD.css';
@@ -38,7 +39,7 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
-      const response = await axios.get('http://localhost:8000/api/users/admin/stats/', {
+      const response = await axios.get(`${API_BASE}/api/users/admin/stats/`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -439,7 +440,7 @@ const UsersManagement = () => {
       if (filters.status) params.append('status', filters.status);
       if (filters.search) params.append('search', filters.search);
 
-      const response = await axios.get(`http://localhost:8000/api/users/admin/users/?${params}`, {
+      const response = await axios.get(`${API_BASE}/api/users/admin/users/?${params}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setUsers(response.data.users);
@@ -544,7 +545,7 @@ const ProductsManagement = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
-      const response = await axios.get('http://localhost:8000/api/users/admin/products/', {
+      const response = await axios.get(`${API_BASE}/api/users/admin/products/`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setProducts(response.data.products);
@@ -626,7 +627,7 @@ const OrdersManagement = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
-      const response = await axios.get('http://localhost:8000/api/users/admin/orders/', {
+      const response = await axios.get(`${API_BASE}/api/users/admin/orders/`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setOrders(response.data.orders);

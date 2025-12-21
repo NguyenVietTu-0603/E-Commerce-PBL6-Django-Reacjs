@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { API_BASE } from '../data/constants';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faPhone, faEnvelope, faMapMarkerAlt, faTimesCircle 
@@ -49,7 +50,7 @@ const ShopProfile = () => {
       if (priceRange.max) params.append('max_price', priceRange.max);
       
       const response = await fetch(
-        `http://localhost:8000/api/users/shop/${sellerId}/?${params.toString()}`
+        `${API_BASE}/api/users/shop/${sellerId}/?${params.toString()}`
       );
       
       if (!response.ok) {

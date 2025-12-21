@@ -1,4 +1,9 @@
-const API = process.env.REACT_APP_API_URL || '';
+const normalizeUrl = (url = '') => {
+  if (!url) return '';
+  return url.endsWith('/') ? url.slice(0, -1) : url;
+};
+
+const API = normalizeUrl(process.env.REACT_APP_API_URL) || '';
 
 function getToken() {
   return localStorage.getItem('access_token') || null;

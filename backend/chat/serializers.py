@@ -3,6 +3,29 @@ from rest_framework import serializers
 from .models import Conversation, Message
 
 
+class ConversationAdminSerializer(serializers.ModelSerializer):
+    """Simple serializer for admin CRUD - no complex lookups"""
+    buyer_username = serializers.CharField(source='buyer.username', read_only=True)
+    shop_username = serializers.CharField(source='shop.username', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True, allow_null=True)
+    
+    class Meta:
+        model = Conversation
+        fields = ['id', 'buyer', 'buyer_username', 'shop', 'shop_username', 
+                  'product', 'product_name', 'created_at', 'buyer_unread', 'shop_unread']
+        read_only_fields = ['id', 'buyer_username', 'shop_username', 'product_name', 'created_at']
+
+
+class MessageAdminSerializer(serializers.ModelSerializer):
+    """Simple serializer for admin CRUD"""
+    sender_username = serializers.CharField(source='sender.username', read_only=True)
+    
+    class Meta:
+        model = Message
+        fields = ['id', 'conversation', 'sender', 'sender_username', 'content', 'created_at']
+        read_only_fields = ['id', 'sender_username', 'created_at']
+
+
 class ConversationSerializer(serializers.ModelSerializer):
     shop_name = serializers.SerializerMethodField()
     shop_avatar = serializers.SerializerMethodField()

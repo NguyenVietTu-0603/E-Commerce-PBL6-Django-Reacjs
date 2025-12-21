@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE } from '../data/constants';
 
 // ==================== ADMIN TABLE ====================
 export const AdminTable = ({ 
@@ -222,7 +223,7 @@ export const AdminForm = ({
   };
 
   const renderField = (field) => {
-    const { name, label, type, required, options, placeholder, disabled } = field;
+    const { name, type, required, options, placeholder, disabled } = field;
     const value = values[name] || '';
 
     switch (type) {
@@ -446,7 +447,7 @@ export const AdminCRUDManager = ({
         ...filterValues
       };
       
-      const response = await axios.get(`http://localhost:8000${apiEndpoint}`, {
+      const response = await axios.get(`${API_BASE}${apiEndpoint}`, {
         headers: { Authorization: `Bearer ${token}` },
         params
       });
@@ -496,7 +497,7 @@ export const AdminCRUDManager = ({
     try {
       const token = localStorage.getItem('access_token');
       const id = itemToDelete[idField];
-      await axios.delete(`http://localhost:8000${apiEndpoint}${id}/`, {
+      await axios.delete(`${API_BASE}${apiEndpoint}${id}/`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('Deleted successfully');
@@ -518,13 +519,13 @@ export const AdminCRUDManager = ({
       const token = localStorage.getItem('access_token');
       
       if (modalMode === 'create') {
-        await axios.post(`http://localhost:8000${apiEndpoint}create/`, formValues, {
+        await axios.post(`${API_BASE}${apiEndpoint}create/`, formValues, {
           headers: { Authorization: `Bearer ${token}` }
         });
         alert('Created successfully');
       } else if (modalMode === 'edit') {
         const id = currentItem[idField];
-        await axios.put(`http://localhost:8000${apiEndpoint}${id}/`, formValues, {
+        await axios.put(`${API_BASE}${apiEndpoint}${id}/`, formValues, {
           headers: { Authorization: `Bearer ${token}` }
         });
         alert('Updated successfully');

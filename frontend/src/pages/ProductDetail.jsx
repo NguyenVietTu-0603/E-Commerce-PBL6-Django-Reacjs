@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { API_BASE } from '../data/constants';
 import { useCart } from '../utils/CartContext';
 import { useWishlist } from '../utils/WishlistContext';
 import { formatPrice } from '../utils/formatPrice';
@@ -37,7 +38,7 @@ export default function ProductDetail() {
     usePageTitle(product?.name || 'Chi tiết sản phẩm');
 
     useEffect(() => {
-        fetch(`http://localhost:8000/api/products/${id}/`)
+        fetch(`${API_BASE}/api/products/${id}/`)
             .then(res => {
                 if (!res.ok) throw new Error('Product not found');
                 return res.json();

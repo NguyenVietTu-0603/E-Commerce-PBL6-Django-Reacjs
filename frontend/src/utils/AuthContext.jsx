@@ -35,25 +35,23 @@ export const AuthProvider = ({ children }) => {
     switch(userType) {
       case 'admin': return '/admin/dashboard';
       case 'seller': return '/seller/dashboard';
-      case 'buyer': return '/dashboard';
-      default: return '/dashboard';
+      case 'buyer': return '/';
+      default: return '/';
     }
   };
 
   const login = async (username, password) => {
     const data = await authService.login(username, password);
     setUser(data.user);
-    const defaultRoute = getDefaultRoute(data.user.user_type);
-    navigate(defaultRoute);
-    return { success: true };
+    // Don't navigate here - let AuthModal handle redirect after user state is updated
+    return { success: true, user: data.user };
   };
 
   const register = async (userData) => {
     const data = await authService.register(userData);
     setUser(data.user);
-    const defaultRoute = getDefaultRoute(data.user.user_type);
-    navigate(defaultRoute);
-    return { success: true };
+    // Don't navigate here - let AuthModal handle redirect after user state is updated
+    return { success: true, user: data.user };
   };
 
   const logout = async () => {

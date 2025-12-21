@@ -22,6 +22,21 @@ class ProfileSerializer(serializers.ModelSerializer):
         }
 
 
+class ProfileAdminSerializer(serializers.ModelSerializer):
+    """
+    Serializer cho Profile model - Admin CRUD
+    Bao gồm id và thông tin user
+    """
+    username = serializers.CharField(source='user.username', read_only=True)
+    user_email = serializers.CharField(source='user.email', read_only=True)
+    
+    class Meta:
+        model = Profile
+        fields = ['id', 'user', 'username', 'user_email', 'avatar', 'bio', 
+                  'address', 'city', 'district', 'ward', 'country']
+        read_only_fields = ['id', 'username', 'user_email']
+
+
 class UserSerializer(serializers.ModelSerializer):
     """
     Serializer cho User model
@@ -39,7 +54,8 @@ class UserSerializer(serializers.ModelSerializer):
             'full_name', 
             'phone', 
             'user_type', 
-            'status', 
+            'status',
+            'profile_completed',
             'created_at',
             'updated_at',
             'profile',

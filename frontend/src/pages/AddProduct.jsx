@@ -1,6 +1,7 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { API_BASE } from '../data/constants';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBox, faDollarSign, faCamera, faCheckCircle, faWandMagicSparkles, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import '../assets/AddProduct.css';
@@ -30,7 +31,7 @@ const AddProduct = () => {
       setLoadingCats(true);
       setCatError(null);
       try {
-        const res = await axios.get('http://localhost:8000/api/categories/', { timeout: 10000 });
+        const res = await axios.get(`${API_BASE}/api/categories/`, { timeout: 10000 });
         const data = res.data;
         const list = Array.isArray(data) ? data : (data.results ?? []);
         if (!cancelled) setCategories(list);
@@ -102,7 +103,7 @@ const AddProduct = () => {
     if (form.imageFile) formData.append('image', form.imageFile);
 
     try {
-      await axios.post('http://localhost:8000/api/products/', formData, {
+      await axios.post(`${API_BASE}/api/products/`, formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',

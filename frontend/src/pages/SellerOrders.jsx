@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../utils/AuthContext';
+import { API_BASE } from '../data/constants';
 import { Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -102,7 +103,7 @@ const SellerOrders = () => {
       setError(null);
       const token = localStorage.getItem('access_token');
       
-      const response = await fetch('http://localhost:8000/api/orders/seller/orders/', {
+      const response = await fetch(`${API_BASE}/api/orders/seller/orders/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -125,7 +126,7 @@ const SellerOrders = () => {
     try {
       const token = localStorage.getItem('access_token');
       
-      const response = await fetch('http://localhost:8000/api/orders/seller/stats/', {
+      const response = await fetch(`${API_BASE}/api/orders/seller/stats/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -144,7 +145,7 @@ const SellerOrders = () => {
   const handleUpdateStatus = async (orderId, newStatus) => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://localhost:8000/api/orders/seller/orders/${orderId}/status/`, {
+      const response = await fetch(`${API_BASE}/api/orders/seller/orders/${orderId}/status/`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,

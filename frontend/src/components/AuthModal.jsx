@@ -55,9 +55,9 @@ export default function AuthModal({
         case "seller":
           return "/seller/dashboard";
         case "buyer":
-          return "/dashboard";
+          return "/";
         default:
-          return "/dashboard";
+          return "/";
       }
     }
     
@@ -137,7 +137,9 @@ export default function AuthModal({
         // Sử dụng setTimeout để đảm bảo state được update trước khi redirect
         setTimeout(() => {
           navigate(redirectPath);
-        }, 100);
+          // Force reload to ensure all contexts are updated
+          window.location.href = redirectPath;
+        }, 150);
       }
 
     } catch (err) {

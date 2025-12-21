@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { API_BASE } from '../data/constants';
 import ProductGrid from '../components/ProductGrid';
 import ImageSearchUpload from '../components/ImageSearchUpload';
 import Loading from '../components/Loading';
@@ -34,8 +35,8 @@ export default function CategoryPage() {
       setError(null);
       try {
         const [cRes, pRes] = await Promise.all([
-          fetch('http://localhost:8000/api/categories/').then(r => r.json()),
-          fetch('http://localhost:8000/api/products/').then(r => r.json())
+          fetch(`${API_BASE}/api/categories/`).then(r => r.json()),
+          fetch(`${API_BASE}/api/products/`).then(r => r.json())
         ]);
         if (cancelled) return;
         

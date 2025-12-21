@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import authService from '../utils/authService';
-import { USER_STATUS } from '../data/constants';
 import usePageTitle from '../hooks/usePageTitle';
 
 const UserList = () => {

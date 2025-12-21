@@ -16,6 +16,7 @@ const getDefaultBase = () => {
 };
 
 const resolvedEnvBase =
+  normalizeBase(process.env.REACT_APP_API_URL) ||
   normalizeBase(process.env.REACT_APP_API_BASE_URL) ||
   normalizeBase(process.env.REACT_APP_API_BASE);
 

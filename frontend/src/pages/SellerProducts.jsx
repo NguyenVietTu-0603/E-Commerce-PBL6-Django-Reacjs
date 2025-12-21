@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
+import { API_BASE } from '../data/constants';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faBox, faChartBar, faCheckCircle, faTimesCircle, faExclamationTriangle,
   faSearch, faPlus, faArrowLeft, faEye, faEdit, faBan, faTrash, faThLarge, faList
 } from '@fortawesome/free-solid-svg-icons';
-import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { formatPrice } from '../utils/formatPrice';
 import '../assets/SellerProducts.css';
@@ -96,7 +96,7 @@ const SellerProducts = () => {
       setError(null);
       const token = localStorage.getItem('access_token');
       
-      const response = await fetch('http://localhost:8000/api/seller/products/', {
+      const response = await fetch(`${API_BASE}/api/seller/products/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -131,7 +131,7 @@ const SellerProducts = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://localhost:8000/api/products/${productId}/toggle/`, {
+      const response = await fetch(`${API_BASE}/api/products/${productId}/toggle/`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -162,7 +162,7 @@ const SellerProducts = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://localhost:8000/api/products/${productId}/`, {
+      const response = await fetch(`${API_BASE}/api/products/${productId}/`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

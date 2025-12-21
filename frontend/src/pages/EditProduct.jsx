@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { API_BASE } from '../data/constants';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faEdit, faCamera, faFileAlt, faMoneyBill, faCog, faSave, 
@@ -33,7 +34,7 @@ const EditProduct = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/products/categories/');
+      const response = await fetch(`${API_BASE}/api/products/categories/`);
       if (response.ok) {
         const data = await response.json();
         setCategories(data.results || data);

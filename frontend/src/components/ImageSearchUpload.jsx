@@ -1,8 +1,9 @@
 import React, { useRef } from 'react';
 import Icon from './Icon';
+import { API_BASE } from '../data/constants';
 
 export default function ImageSearchUpload({
-  endpoint = 'http://localhost:8000/api/search/image/',
+  endpoint = `${API_BASE}/api/search/image/`,
   label = 'Tìm bằng ảnh',
   onStart,
   onFinish,

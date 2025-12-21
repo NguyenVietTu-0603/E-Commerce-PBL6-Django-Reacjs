@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
+import { API_BASE } from '../data/constants';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faBox,
@@ -20,7 +21,6 @@ import {
   faBell
 } from '@fortawesome/free-solid-svg-icons';
 import { formatPrice } from '../utils/formatPrice';
-import Header from '../components/Header';
 import Footer from '../components/Footer';
 import '../assets/SellerDashboard.css';
 
@@ -71,7 +71,7 @@ const SellerDashboard = () => {
       let ordersData = [];
 
       try {
-        const statsRes = await fetch('http://localhost:8000/api/seller/stats/', {
+        const statsRes = await fetch(`${API_BASE}/api/seller/stats/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (statsRes.ok) {
@@ -82,7 +82,7 @@ const SellerDashboard = () => {
       }
 
       try {
-        const productsRes = await fetch('http://localhost:8000/api/seller/products/', {
+        const productsRes = await fetch(`${API_BASE}/api/seller/products/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (productsRes.ok) {
@@ -94,7 +94,7 @@ const SellerDashboard = () => {
       }
 
       try {
-        const ordersRes = await fetch('http://localhost:8000/api/orders/seller/orders/', {
+        const ordersRes = await fetch(`${API_BASE}/api/orders/seller/orders/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (ordersRes.ok) {
@@ -182,32 +182,12 @@ const SellerDashboard = () => {
     });
   }, [allOrders, orderFilter, searchTerm]);
 
-  const handleProductStatusToggle = async (productId, currentStatus) => {
-    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-    try {
-      const response = await fetch(`http://localhost:8000/api/products/${productId}/`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ is_active: !currentStatus }),
-      });
-
-      if (response.ok) {
-        fetchSellerData();
-      }
-    } catch (error) {
-      console.error('Lỗi cập nhật sản phẩm:', error);
-    }
-  };
-
   const handleDeleteProduct = async (productId) => {
     if (!window.confirm('Bạn có chắc muốn xóa sản phẩm này?')) return;
 
     const token = localStorage.getItem('access_token') || localStorage.getItem('token');
     try {
-      const response = await fetch(`http://localhost:8000/api/products/${productId}/`, {
+      const response = await fetch(`${API_BASE}/api/products/${productId}/`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -222,7 +202,7 @@ const SellerDashboard = () => {
   const handleOrderStatusUpdate = async (orderId, newStatus) => {
     const token = localStorage.getItem('access_token') || localStorage.getItem('token');
     try {
-      const response = await fetch(`http://localhost:8000/api/orders/seller/orders/${orderId}/status/`, {
+      const response = await fetch(`${API_BASE}/api/orders/seller/orders/${orderId}/status/`, {
         method: 'PATCH',
         headers: {
           Authorization: `Bearer ${token}`,
