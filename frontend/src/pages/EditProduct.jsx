@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import '../assets/AddProduct.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faEdit, faCamera, faFileAlt, faMoneyBill, faCog, faSave, 
+  faTimes, faArrowLeft, faTimesCircle, faPlus 
+} from '@fortawesome/free-solid-svg-icons';
+import '../assets/EditProduct.css';
 
 const EditProduct = () => {
   const { id } = useParams();
@@ -264,11 +269,11 @@ const EditProduct = () => {
     return (
       <div className="add-product-page">
         <div className="error-container">
-          <div className="error-icon">❌</div>
+          <div className="error-icon"><FontAwesomeIcon icon={faTimesCircle} size="4x" /></div>
           <h2>Lỗi</h2>
           <p>{errors.fetch}</p>
           <Link to="/seller/products" className="btn btn-primary">
-            ← Quay lại danh sách sản phẩm
+            <FontAwesomeIcon icon={faArrowLeft} /> Quay lại danh sách sản phẩm
           </Link>
         </div>
       </div>
@@ -282,9 +287,9 @@ const EditProduct = () => {
         <div className="page-header">
           <div className="header-content">
             <Link to="/seller/products" className="back-link">
-              ← Quay lại
+              <FontAwesomeIcon icon={faArrowLeft} /> Quay lại
             </Link>
-            <h1>✏️ Chỉnh sửa sản phẩm</h1>
+            <h1><FontAwesomeIcon icon={faEdit} /> Chỉnh sửa sản phẩm</h1>
             <p>Cập nhật thông tin sản phẩm của bạn</p>
           </div>
         </div>
@@ -297,14 +302,14 @@ const EditProduct = () => {
 
         {errors.submit && (
           <div className="alert alert-error">
-            ❌ {errors.submit}
+            <FontAwesomeIcon icon={faTimesCircle} /> {errors.submit}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="product-form">
           
           <div className="form-section">
-            <h3>📷 Hình ảnh sản phẩm</h3>
+            <h3><FontAwesomeIcon icon={faCamera} /> Hình ảnh sản phẩm</h3>
             
             <div className="image-upload-area">
               {imagePreview ? (
@@ -327,7 +332,7 @@ const EditProduct = () => {
                 </div>
               ) : (
                 <div className="upload-placeholder">
-                  <span className="upload-icon">📷</span>
+                  <span className="upload-icon"><FontAwesomeIcon icon={faCamera} size="3x" /></span>
                   <p>Chưa có ảnh</p>
                 </div>
               )}
@@ -340,7 +345,10 @@ const EditProduct = () => {
                 className="file-input"
               />
               <label htmlFor="image" className="file-label">
-                {imagePreview ? '📝 Thay đổi ảnh' : '➕ Chọn ảnh'}
+                {imagePreview ? 
+                  <><FontAwesomeIcon icon={faEdit} /> Thay đổi ảnh</> : 
+                  <><FontAwesomeIcon icon={faPlus} /> Chọn ảnh</>
+                }
               </label>
               
               {errors.image && (
@@ -353,7 +361,7 @@ const EditProduct = () => {
           </div>
 
           <div className="form-section">
-            <h3>📝 Thông tin cơ bản</h3>
+            <h3><FontAwesomeIcon icon={faFileAlt} /> Thông tin cơ bản</h3>
             
             <div className="form-group">
               <label htmlFor="name">
@@ -416,7 +424,7 @@ const EditProduct = () => {
           </div>
 
           <div className="form-section">
-            <h3>💰 Giá & Kho hàng</h3>
+            <h3><FontAwesomeIcon icon={faMoneyBill} /> Giá & Kho hàng</h3>
             
             <div className="form-row">
               <div className="form-group">
@@ -461,7 +469,7 @@ const EditProduct = () => {
           </div>
 
           <div className="form-section">
-            <h3>⚙️ Trạng thái</h3>
+            <h3><FontAwesomeIcon icon={faCog} /> Trạng thái</h3>
             
             <div className="form-group checkbox-group">
               <label className="checkbox-label">
@@ -486,7 +494,7 @@ const EditProduct = () => {
               onClick={() => navigate('/seller/products')}
               disabled={submitting}
             >
-              Hủy
+              <FontAwesomeIcon icon={faTimes} /> Hủy
             </button>
             <button
               type="submit"
@@ -499,7 +507,7 @@ const EditProduct = () => {
                   Đang cập nhật...
                 </>
               ) : (
-                <>💾 Cập nhật sản phẩm</>
+                <><FontAwesomeIcon icon={faSave} /> Cập nhật sản phẩm</>
               )}
             </button>
           </div>

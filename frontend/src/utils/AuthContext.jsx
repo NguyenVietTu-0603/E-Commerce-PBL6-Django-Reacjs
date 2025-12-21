@@ -74,6 +74,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateUser,
+    setUser,  // Export setUser để các component khác có thể update user trực tiếp
     isAuthenticated: !!user,
     isAdmin: user?.user_type === 'admin',
     isSeller: user?.user_type === 'seller',

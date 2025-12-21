@@ -4,9 +4,8 @@ import { AuthProvider, useAuth } from './utils/AuthContext';
 import { CartProvider } from './utils/CartContext';
 import { WishlistProvider } from './utils/WishlistContext';
 import PrivateRoute from './components/PrivateRoute';
+import ProfileGuard from './components/ProfileGuard';
 import Header from './components/Header';
-import Login from './pages/Login';
-import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import SellerDashboard from './pages/SellerDashboard';
@@ -39,16 +38,13 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <WishlistProvider>
-            <div className="App">
-              <Header />
-              <Routes>
+            <ProfileGuard>
+              <div className="App">
+                <Header />
+                <Routes>
                 {/* ==================== PUBLIC ROUTES ==================== */}
                 <Route index element={<Home />} />
                 <Route path="/" element={<Home />} />
-
-                {/* Auth */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
 
                 {/* Category page */}
                 <Route path="/category/:slug" element={<CategoryPage />} />
@@ -199,6 +195,7 @@ function App() {
               </Routes>
               <ChatWidget />
             </div>
+          </ProfileGuard>
           </WishlistProvider>
         </CartProvider>
       </AuthProvider>
@@ -208,7 +205,7 @@ function App() {
 
 const RoleBasedRedirect = () => {
   const { user, getDefaultRoute } = useAuth();
-  if (!user) return <Navigate to="/login" />;
+  if (!user) return <Navigate to="/" />;
   return <Navigate to={getDefaultRoute(user.user_type)} />;
 };
 

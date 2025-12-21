@@ -190,19 +190,15 @@ export default function Header({
         onLoginSuccess={(user) => {
           try {
             if (auth?.setUser) auth.setUser(user);
-            // ⬇️ THÊM: Reload trang sau khi đăng nhập thành công
-            setTimeout(() => {
-              window.location.reload();
-            }, 100);
+            setIsAuthOpen(false);
+            // AuthModal sẽ tự động redirect đến trang phù hợp với user_type
           } catch { }
         }}
         onRegisterSuccess={(user) => {
           try {
             if (auth?.setUser) auth.setUser(user);
-            // ⬇️ THÊM: Reload trang sau khi đăng ký thành công
-            setTimeout(() => {
-              window.location.reload();
-            }, 100);
+            setIsAuthOpen(false);
+            // AuthModal sẽ tự động redirect đến trang phù hợp với user_type
           } catch { }
         }}
       />

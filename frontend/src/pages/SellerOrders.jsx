@@ -1,8 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faClipboardList, faClock, faTruck, faCheckCircle, faTimesCircle, 
+  faSearch, faBox, faArrowLeft, faChartBar, faCreditCard, faMoneyBill, faEnvelope, faPhone, faEye, faSave
+} from '@fortawesome/free-solid-svg-icons';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { formatPrice } from '../utils/formatPrice';
 import '../assets/SellerOrders.css';
 
 const SellerOrders = () => {
@@ -168,11 +174,11 @@ const SellerOrders = () => {
 
   const getStatusBadge = (status) => {
     const badges = {
-      pending: { class: 'warning', icon: '⏳', text: 'Chờ xác nhận' },
-      paid: { class: 'info', icon: '💳', text: 'Đã thanh toán' },
-      shipping: { class: 'primary', icon: '🚚', text: 'Đang giao' },
-      completed: { class: 'success', icon: '✅', text: 'Hoàn thành' },
-      canceled: { class: 'danger', icon: '❌', text: 'Đã hủy' },
+      pending: { class: 'warning', icon: faClock, text: 'Chờ xác nhận' },
+      paid: { class: 'info', icon: faCreditCard, text: 'Đã thanh toán' },
+      shipping: { class: 'primary', icon: faTruck, text: 'Đang giao' },
+      completed: { class: 'success', icon: faCheckCircle, text: 'Hoàn thành' },
+      canceled: { class: 'danger', icon: faTimesCircle, text: 'Đã hủy' },
     };
     return badges[status] || badges.pending;
   };
@@ -208,10 +214,10 @@ const SellerOrders = () => {
           <div className="page-header">
             <div className="header-left">
               <Link to="/seller/dashboard" className="back-btn">
-                ← Dashboard
+                <FontAwesomeIcon icon={faArrowLeft} /> Dashboard
               </Link>
               <div>
-                <h1>📋 Quản lý đơn hàng</h1>
+                <h1><FontAwesomeIcon icon={faClipboardList} /> Quản lý đơn hàng</h1>
                 <p>Theo dõi và xử lý đơn hàng của bạn</p>
               </div>
             </div>
@@ -220,44 +226,44 @@ const SellerOrders = () => {
           {/* Stats Cards */}
           <div className="stats-row">
             <div className="stat-card total">
-              <div className="stat-icon">📊</div>
+              <div className="stat-icon"><FontAwesomeIcon icon={faChartBar} /></div>
               <div className="stat-info">
                 <h3>{stats.total}</h3>
                 <p>Tổng đơn</p>
               </div>
             </div>
             <div className="stat-card pending">
-              <div className="stat-icon">⏳</div>
+              <div className="stat-icon"><FontAwesomeIcon icon={faClock} /></div>
               <div className="stat-info">
                 <h3>{stats.pending}</h3>
                 <p>Chờ xác nhận</p>
               </div>
             </div>
             <div className="stat-card paid">
-              <div className="stat-icon">💳</div>
+              <div className="stat-icon"><FontAwesomeIcon icon={faCreditCard} /></div>
               <div className="stat-info">
                 <h3>{stats.paid}</h3>
                 <p>Đã thanh toán</p>
               </div>
             </div>
             <div className="stat-card shipping">
-              <div className="stat-icon">🚚</div>
+              <div className="stat-icon"><FontAwesomeIcon icon={faTruck} /></div>
               <div className="stat-info">
                 <h3>{stats.shipping}</h3>
                 <p>Đang giao</p>
               </div>
             </div>
             <div className="stat-card completed">
-              <div className="stat-icon">✅</div>
+              <div className="stat-icon"><FontAwesomeIcon icon={faCheckCircle} /></div>
               <div className="stat-info">
                 <h3>{stats.completed}</h3>
                 <p>Hoàn thành</p>
               </div>
             </div>
             <div className="stat-card revenue">
-              <div className="stat-icon">💰</div>
+              <div className="stat-icon"><FontAwesomeIcon icon={faMoneyBill} /></div>
               <div className="stat-info">
-                <h3>${stats.total_revenue.toFixed(2)}</h3>
+                <h3>{formatPrice(stats.total_revenue || 0)}</h3>
                 <p>Doanh thu</p>
               </div>
             </div>
@@ -268,7 +274,7 @@ const SellerOrders = () => {
             <div className="filters-row">
               {/* Search */}
               <div className="search-box">
-                <span className="search-icon">🔍</span>
+                <span className="search-icon"><FontAwesomeIcon icon={faSearch} /></span>
                 <input
                   type="text"
                   placeholder="Tìm theo mã đơn, tên, email, SĐT..."
@@ -324,7 +330,7 @@ const SellerOrders = () => {
           {/* Error Message */}
           {error && (
             <div className="error-message">
-              ❌ Lỗi: {error}
+              <FontAwesomeIcon icon={faTimesCircle} /> Lỗi: {error}
               <button onClick={fetchOrders}>Thử lại</button>
             </div>
           )}
@@ -332,7 +338,7 @@ const SellerOrders = () => {
           {/* Orders Table */}
           {filteredOrders.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-icon">📦</div>
+              <div className="empty-icon"><FontAwesomeIcon icon={faBox} size="3x" /></div>
               <h2>Không tìm thấy đơn hàng</h2>
               <p>
                 {searchTerm || statusFilter !== 'all' 
@@ -368,10 +374,10 @@ const SellerOrders = () => {
                             <div className="customer-info">
                               <div className="customer-name">{order.full_name}</div>
                               <div className="customer-contact">
-                                📧 {order.buyer_email}
+                                <FontAwesomeIcon icon={faEnvelope} /> {order.buyer_email}
                               </div>
                               <div className="customer-contact">
-                                📱 {order.buyer_phone}
+                                <FontAwesomeIcon icon={faPhone} /> {order.buyer_phone}
                               </div>
                             </div>
                           </td>
@@ -388,13 +394,13 @@ const SellerOrders = () => {
                             </span>
                           </td>
                           <td>
-                            <strong className="order-total">
-                              ${order.seller_total.toFixed(2)}
+                            <strong className="order-total1">
+                              {formatPrice(order.seller_total || 0)}
                             </strong>
                           </td>
                           <td>
                             <span className={`status-badge ${statusInfo.class}`}>
-                              {statusInfo.icon} {statusInfo.text}
+                              <FontAwesomeIcon icon={statusInfo.icon} /> {statusInfo.text}
                             </span>
                           </td>
                           <td>
@@ -412,7 +418,7 @@ const SellerOrders = () => {
                               onClick={() => viewOrderDetail(order)}
                               title="Xem chi tiết"
                             >
-                              👁️ Chi tiết
+                              <FontAwesomeIcon icon={faEye} /> Chi tiết
                             </button>
                           </td>
                         </tr>
@@ -430,7 +436,7 @@ const SellerOrders = () => {
                     onClick={() => paginate(currentPage - 1)}
                     disabled={currentPage === 1}
                   >
-                    ← Trước
+                    <FontAwesomeIcon icon={faArrowLeft} /> Trước
                   </button>
                   
                   <div className="page-numbers">
@@ -519,7 +525,7 @@ const OrderDetailModal = ({ order, onClose, onUpdateStatus, getStatusBadge }) =>
           <div className="detail-section">
             <h3>Trạng thái hiện tại</h3>
             <span className={`status-badge ${statusInfo.class}`}>
-              {statusInfo.icon} {statusInfo.text}
+              <FontAwesomeIcon icon={statusInfo.icon} /> {statusInfo.text}
             </span>
           </div>
 
@@ -576,18 +582,18 @@ const OrderDetailModal = ({ order, onClose, onUpdateStatus, getStatusBadge }) =>
                       {item.size && <span>Size: {item.size}</span>}
                     </div>
                     <div className="item-meta">
-                      ${item.price} × {item.quantity}
+                      {formatPrice(item.price || 0)} × {item.quantity}
                     </div>
                   </div>
                   <div className="item-total">
-                    ${item.total.toFixed(2)}
+                    {formatPrice(item.total || 0)}
                   </div>
                 </div>
               ))}
             </div>
             <div className="order-total-row">
               <strong>Tổng cộng (sản phẩm của bạn):</strong>
-              <strong className="total-amount">${order.seller_total.toFixed(2)}</strong>
+              <strong className="total-amount">{formatPrice(order.seller_total || 0)}</strong>
             </div>
           </div>
 
@@ -620,7 +626,7 @@ const OrderDetailModal = ({ order, onClose, onUpdateStatus, getStatusBadge }) =>
             onClick={handleSubmit}
             disabled={newStatus === order.status}
           >
-            💾 Cập nhật
+            <FontAwesomeIcon icon={faSave} /> Cập nhật
           </button>
         </div>
       </div>

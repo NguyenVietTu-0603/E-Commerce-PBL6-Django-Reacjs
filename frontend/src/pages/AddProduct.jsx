@@ -1,6 +1,8 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBox, faDollarSign, faCamera, faCheckCircle, faWandMagicSparkles, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import '../assets/AddProduct.css';
 
 const AddProduct = () => {
@@ -124,7 +126,7 @@ const AddProduct = () => {
 
           {/* Header */}
           <div className="add-product-header">
-            <span className="icon">📦</span>
+            <FontAwesomeIcon icon={faBox} size="3x" style={{ marginBottom: '15px' }} />
             <h1>Thêm Sản Phẩm Mới</h1>
             <p>Điền thông tin sản phẩm của bạn</p>
           </div>
@@ -132,7 +134,7 @@ const AddProduct = () => {
           {/* Form */}
           <div className="add-product-form">
             <Link to="/seller/products" className="back-link">
-              ← Quay lại Danh sách sản phẩm
+              <FontAwesomeIcon icon={faArrowLeft} /> Quay lại Danh sách sản phẩm
             </Link>
 
             <div className="required-fields-note">
@@ -160,8 +162,9 @@ const AddProduct = () => {
                   onChange={handleChange}
                   disabled={loading}
                   maxLength={200}
+                  autoFocus
                 />
-                <span className="char-counter">
+                <span className={`char-counter ${form.name.length > 180 ? 'warning' : ''} ${form.name.length >= 200 ? 'error' : ''}`}>
                   {form.name.length}/200 ký tự
                 </span>
               </div>
@@ -207,14 +210,14 @@ const AddProduct = () => {
                 <textarea
                   name="description"
                   className="form-input"
-                  placeholder="Nhập mô tả chi tiết về sản phẩm..."
+                  placeholder="Nhập mô tả chi tiết về sản phẩm: tính năng, chất liệu, hướng dẫn sử dụng..."
                   rows={5}
                   value={form.description}
                   onChange={handleChange}
                   disabled={loading}
                   maxLength={1000}
                 />
-                <span className="char-counter">
+                <span className={`char-counter ${form.description.length > 900 ? 'warning' : ''} ${form.description.length >= 1000 ? 'error' : ''}`}>
                   {form.description.length}/1000 ký tự
                 </span>
               </div>
@@ -226,20 +229,20 @@ const AddProduct = () => {
                     Giá <span className="required">*</span>
                   </label>
                   <div className="input-group">
-                    <span className="input-icon">💰</span>
+                    <span className="input-icon"><FontAwesomeIcon icon={faDollarSign} /></span>
                     <input
                       type="number"
-                      step="0.01"
+                      step="1000"
                       min="0"
                       name="price"
                       className="form-input"
-                      placeholder="0.00"
+                      placeholder="0"
                       value={form.price}
                       onChange={handleChange}
                       disabled={loading}
                     />
                   </div>
-                  <span className="helper-text">Đơn vị: USD</span>
+                  <span className="helper-text">Đơn vị: VNĐ</span>
                 </div>
 
                 <div className="form-group">
@@ -247,10 +250,11 @@ const AddProduct = () => {
                     Số lượng <span className="required">*</span>
                   </label>
                   <div className="input-group">
-                    <span className="input-icon">📦</span>
+                    <span className="input-icon"><FontAwesomeIcon icon={faBox} /></span>
                     <input
                       type="number"
                       min="0"
+                      step="1"
                       name="stock"
                       className="form-input"
                       placeholder="0"
@@ -267,21 +271,21 @@ const AddProduct = () => {
               <div className="form-group">
                 <label className="form-label">
                   Hình ảnh sản phẩm
-                  <span className="form-label-optional">(Không bắt buộc)</span>
+                  <span className="form-label-optional">(Khuyến nghị)</span>
                 </label>
                 
                 {!imagePreview ? (
                   <label className="file-input-label">
-                    <span className="icon">📷</span>
+                    <FontAwesomeIcon icon={faCamera} size="2x" />
                     <div>
-                      <strong>Chọn ảnh sản phẩm</strong>
+                      <strong>Nhấp để chọn hoặc kéo thả ảnh vào đây</strong>
                       <br />
-                      <small>PNG, JPG, GIF (Max 5MB)</small>
+                      <small>PNG, JPG, JPEG (Tối đa 5MB)</small>
                     </div>
                     <input
                       type="file"
                       name="imageFile"
-                      accept="image/*"
+                      accept="image/png,image/jpeg,image/jpg"
                       onChange={handleChange}
                       disabled={loading}
                     />
@@ -290,19 +294,23 @@ const AddProduct = () => {
                   <div className="file-preview">
                     <img src={imagePreview} alt="Preview" />
                     <div className="file-name">
-                      <span className="icon">✅</span>
+                      <FontAwesomeIcon icon={faCheckCircle} style={{ color: '#28a745' }} />
                       <span>{form.imageFile?.name}</span>
                       <button
                         type="button"
                         className="remove-file-btn"
                         onClick={removeImage}
                         title="Xóa ảnh"
+                        disabled={loading}
                       >
                         ×
                       </button>
                     </div>
                   </div>
                 )}
+                <span className="helper-text">
+                  Ảnh chất lượng cao giúp sản phẩm hấp dẫn hơn với khách hàng
+                </span>
               </div>
 
               {/* Submit Button */}
@@ -318,7 +326,10 @@ const AddProduct = () => {
                       Đang tạo sản phẩm...
                     </>
                   ) : (
-                    <>✨ Tạo sản phẩm</>
+                    <>
+                      <FontAwesomeIcon icon={faWandMagicSparkles} style={{ marginRight: '8px' }} />
+                      Tạo sản phẩm
+                    </>
                   )}
                 </button>
 

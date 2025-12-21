@@ -1,8 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faBox, faChartBar, faCheckCircle, faTimesCircle, faExclamationTriangle,
+  faSearch, faPlus, faArrowLeft, faEye, faEdit, faBan, faTrash, faThLarge, faList
+} from '@fortawesome/free-solid-svg-icons';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { formatPrice } from '../utils/formatPrice';
 import '../assets/SellerProducts.css';
 
 const SellerProducts = () => {
@@ -184,7 +190,6 @@ const SellerProducts = () => {
   if (loading) {
     return (
       <>
-        <Header />
         <div className="seller-products-loading">
           <div className="spinner"></div>
           <p>Đang tải sản phẩm...</p>
@@ -204,43 +209,43 @@ const SellerProducts = () => {
           <div className="page-header">
             <div className="header-left">
               <Link to="/seller/dashboard" className="back-btn">
-                ← Dashboard
+                <FontAwesomeIcon icon={faArrowLeft} /> Dashboard
               </Link>
               <div>
-                <h1>📦 Quản lý sản phẩm</h1>
+                <h1><FontAwesomeIcon icon={faBox} /> Quản lý sản phẩm</h1>
                 <p>Quản lý tất cả sản phẩm của bạn</p>
               </div>
             </div>
             <Link to="/seller/products/add" className="btn btn-primary" style={{ width: "230px" }}>
-              ➕ Thêm sản phẩm mới
+              <FontAwesomeIcon icon={faPlus} /> Thêm sản phẩm mới
             </Link>
           </div>
 
           {/* Stats Cards */}
           <div className="stats-row">
             <div className="stat-card">
-              <div className="stat-icon">📊</div>
+              <div className="stat-icon"><FontAwesomeIcon icon={faChartBar} /></div>
               <div className="stat-info">
                 <h3>{stats.total}</h3>
                 <p>Tổng sản phẩm</p>
               </div>
             </div>
             <div className="stat-card active">
-              <div className="stat-icon">✅</div>
+              <div className="stat-icon"><FontAwesomeIcon icon={faCheckCircle} /></div>
               <div className="stat-info">
                 <h3>{stats.active}</h3>
                 <p>Đang hoạt động</p>
               </div>
             </div>
             <div className="stat-card inactive">
-              <div className="stat-icon">❌</div>
+              <div className="stat-icon"><FontAwesomeIcon icon={faTimesCircle} /></div>
               <div className="stat-info">
                 <h3>{stats.inactive}</h3>
                 <p>Đã ẩn</p>
               </div>
             </div>
             <div className="stat-card warning">
-              <div className="stat-icon">⚠️</div>
+              <div className="stat-icon"><FontAwesomeIcon icon={faExclamationTriangle} /></div>
               <div className="stat-info">
                 <h3>{stats.outOfStock}</h3>
                 <p>Hết hàng</p>
@@ -253,7 +258,7 @@ const SellerProducts = () => {
             <div className="filters-row">
               {/* Search */}
               <div className="search-box">
-                <span className="search-icon">🔍</span>
+                <span className="search-icon"><FontAwesomeIcon icon={faSearch} /></span>
                 <input
                   type="text"
                   placeholder="Tìm kiếm sản phẩm..."
@@ -301,14 +306,14 @@ const SellerProducts = () => {
                   onClick={() => setViewMode('grid')}
                   title="Xem dạng lưới"
                 >
-                  ▦
+                  <FontAwesomeIcon icon={faThLarge} />
                 </button>
                 <button 
                   className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
                   onClick={() => setViewMode('list')}
                   title="Xem dạng danh sách"
                 >
-                  ☰
+                  <FontAwesomeIcon icon={faList} />
                 </button>
               </div>
             </div>
@@ -325,7 +330,7 @@ const SellerProducts = () => {
           {/* Error Message */}
           {error && (
             <div className="error-message">
-              ❌ Lỗi: {error}
+              <FontAwesomeIcon icon={faTimesCircle} /> Lỗi: {error}
               <button onClick={fetchProducts}>Thử lại</button>
             </div>
           )}
@@ -333,7 +338,7 @@ const SellerProducts = () => {
           {/* Products Grid/List */}
           {filteredProducts.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-icon">📦</div>
+              <div className="empty-icon"><FontAwesomeIcon icon={faBox} size="4x" /></div>
               <h2>Không tìm thấy sản phẩm</h2>
               <p>
                 {searchTerm || statusFilter !== 'all' 
@@ -342,7 +347,7 @@ const SellerProducts = () => {
               </p>
               {!searchTerm && statusFilter === 'all' && (
                 <Link to="/seller/products/add" className="btn btn-primary">
-                  ➕ Thêm sản phẩm đầu tiên
+                  <FontAwesomeIcon icon={faPlus} /> Thêm sản phẩm đầu tiên
                 </Link>
               )}
             </div>
@@ -384,7 +389,7 @@ const SellerProducts = () => {
                       <div className="product-meta">
                         <div className="meta-item">
                           <span className="label">Giá:</span>
-                          <span className="value price">${product.price}</span>
+                          <span className="value price">{formatPrice(product.price || 0)}</span>
                         </div>
                         <div className="meta-item">
                           <span className="label">Kho:</span>
@@ -410,28 +415,28 @@ const SellerProducts = () => {
                         className="action-btn view"
                         title="Xem chi tiết"
                       >
-                        👁️ Xem
+                        <FontAwesomeIcon icon={faEye} /> Xem
                       </Link>
                       <Link 
                         to={`/seller/products/edit/${product.id}`}
                         className="action-btn edit"
                         title="Chỉnh sửa"
                       >
-                        ✏️ Sửa
+                        <FontAwesomeIcon icon={faEdit} /> Sửa
                       </Link>
                       <button 
                         className={`action-btn toggle ${product.is_active ? 'hide' : 'show'}`}
                         onClick={() => handleToggleStatus(product.id, product.is_active)}
                         title={product.is_active ? 'Ẩn sản phẩm' : 'Hiện sản phẩm'}
                       >
-                        {product.is_active ? '🚫 Ẩn' : '✅ Hiện'}
+                        {product.is_active ? <><FontAwesomeIcon icon={faBan} /> Ẩn</> : <><FontAwesomeIcon icon={faCheckCircle} /> Hiện</>}
                       </button>
                       <button 
                         className="action-btn delete"
                         onClick={() => handleDeleteProduct(product.id, product.name)}
                         title="Xóa sản phẩm"
                       >
-                        🗑️ Xóa
+                        <FontAwesomeIcon icon={faTrash} /> Xóa
                       </button>
                     </div>
 

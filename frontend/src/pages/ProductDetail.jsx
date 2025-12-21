@@ -180,7 +180,7 @@ export default function ProductDetail() {
 
     // Shop info
     const shop = {
-        id: product.seller_id,
+        id: product.seller,
         name: product.seller_name || 'Cửa hàng V-Market',
         avatar: 'avatars/default-avatar.png',
         rating: product.rating || 4.8,
