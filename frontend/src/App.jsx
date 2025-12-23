@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './utils/AuthContext';
 import { CartProvider } from './utils/CartContext';
 import { WishlistProvider } from './utils/WishlistContext';
 import PrivateRoute from './components/PrivateRoute';
+import ProfileGuard from './components/ProfileGuard';
 import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
